@@ -529,6 +529,154 @@ document.addEventListener("DOMContentLoaded", () => {
             blackHoleGroup.add(lensParticles);
 
             // ------------------------------------------------------------------
+            // 4B. WARPED CODE WATERFALL & SPACETIME CURVATURE (PINTEREST PIN ARTWORK)
+            // ------------------------------------------------------------------
+            // 1. Dynamic In-Memory Code Matrix Texture
+            function createCodeMatrixTexture() {
+                const canvas = document.createElement("canvas");
+                canvas.width = 512;
+                canvas.height = 1024;
+                const ctx = canvas.getContext("2d");
+
+                ctx.fillStyle = "rgba(0, 0, 0, 0)";
+                ctx.fillRect(0, 0, 512, 1024);
+
+                ctx.font = "bold 15px 'JetBrains Mono', 'Courier New', monospace";
+                const lines = [
+                    "0x7FFE2A91  SELECT * FROM threat_vectors WHERE risk > 0.85",
+                    "POST /api/intercept -> HTTP/2 403 QUARANTINE_ISOLATE",
+                    "https://paypal.com.verify-auth.xyz/session=0x9f821",
+                    "01010000 01101000 01101001 01110011 01101000 [URL]",
+                    "SHA256: 4e82b70fc931a... [ZERO-DAY BUFFER FLUSH]",
+                    "SINGULARITY INGESTION VECTOR: r -> r_s [C=299792km/s]",
+                    "EVALUATING DOMAIN: suspicious punycode spoof detected",
+                    "01100001 01110101 01110100 01101000 00101101 01110011",
+                    "HTTP/1.1 200 INGESTED INTO SINGULARITY",
+                    "http://192.168.1.45:8080/secure-update.php?id=829",
+                    "GRAVITATIONAL CURVATURE: alpha = 4GM / (c^2 * b)",
+                    "01100100 01100101 01100110 01100101 01101110 01110011",
+                    "MODEL_INFERENCE: Random Forest -> Phishing (100.0%)",
+                    "DECEPTIVE TOKEN ANOMALY: @ symbol obfuscation detected",
+                    "01001011 01000101 01010000 01001100 01000101 01010010",
+                    "EVENT_HORIZON_SHIELD: 100% INTACT // ZERO ESCAPE"
+                ];
+
+                for (let y = 0; y < 1024; y += 22) {
+                    const line = lines[Math.floor(y / 22) % lines.length];
+                    const alpha = 0.55 + 0.45 * Math.sin(y * 0.05);
+                    ctx.fillStyle = `rgba(255, 230, 170, ${alpha})`;
+                    ctx.fillText(line, 12, y + 16);
+                }
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(1, 2);
+                return { texture: tex, canvas: canvas };
+            }
+
+            const codeTextureObj = createCodeMatrixTexture();
+
+            // 2. Warped Curving Ribbon Plunging Into The Black Hole
+            const ribbonWidth = 6.8;
+            const ribbonLength = 26.0;
+            const ribbonSegments = 70;
+            const ribbonGeo = new THREE.PlaneGeometry(ribbonWidth, ribbonLength, 12, ribbonSegments);
+            const rPos = ribbonGeo.attributes.position.array;
+
+            for (let i = 0; i <= ribbonSegments; i++) {
+                const t = i / ribbonSegments; // 0 (start in deep space) to 1 (at event horizon)
+                // Relativistic parabolic trajectory plunging from top-right down into black hole
+                const cx = 13.8 * (1 - t) + 2.6 * t + Math.sin(t * Math.PI) * 2.2;
+                const cy = 8.5 * (1 - t) + 0.35 * t - Math.sin(t * Math.PI * 0.85) * 1.6;
+                const cz = -9.0 * (1 - t) + 1.2 * t + Math.cos(t * Math.PI) * 1.8;
+
+                const curWidth = ribbonWidth * (1.0 - t * 0.68); // Narrowing as gravity compresses data
+
+                for (let j = 0; j <= 12; j++) {
+                    const u = (j / 12 - 0.5) * curWidth;
+                    const idx = (i * 13 + j) * 3;
+                    rPos[idx] = cx + u * 0.72;
+                    rPos[idx + 1] = cy + u * 0.32;
+                    rPos[idx + 2] = cz - u * 0.62;
+                }
+            }
+            ribbonGeo.computeVertexNormals();
+
+            const codeMat = new THREE.MeshBasicMaterial({
+                map: codeTextureObj.texture,
+                transparent: true,
+                opacity: 0.88,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const codeWaterfallMesh = new THREE.Mesh(ribbonGeo, codeMat);
+            blackHoleGroup.add(codeWaterfallMesh);
+
+            // 3. Spacetime Curvature Coordinate Grid (Einstein Potential Well)
+            const gridRings = 22;
+            const gridSegments = 64;
+            const spacetimeGeo = new THREE.RingGeometry(horizonRadius + 0.4, 18.0, gridSegments, gridRings);
+            const stPos = spacetimeGeo.attributes.position.array;
+
+            for (let i = 0; i < stPos.length; i += 3) {
+                const x = stPos[i];
+                const y = stPos[i + 1];
+                const r = Math.sqrt(x * x + y * y);
+                const depth = -4.0 / Math.sqrt(Math.max(0.2, r - horizonRadius + 0.3));
+                stPos[i + 2] = depth;
+            }
+            spacetimeGeo.computeVertexNormals();
+
+            const spacetimeMat = new THREE.MeshBasicMaterial({
+                color: 0xffa028,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.11,
+                blending: THREE.AdditiveBlending
+            });
+
+            const spacetimeMesh = new THREE.Mesh(spacetimeGeo, spacetimeMat);
+            spacetimeMesh.rotation.x = -Math.PI / 2;
+            blackHoleGroup.add(spacetimeMesh);
+
+            // 4. Data Ingestion Stream Particles (Binary & URL Token Flow)
+            const streamCount = 3200;
+            const streamGeo = new THREE.BufferGeometry();
+            const streamPos = new Float32Array(streamCount * 3);
+            const streamCol = new Float32Array(streamCount * 3);
+            const streamData = [];
+
+            for (let i = 0; i < streamCount; i++) {
+                const p = Math.random();
+                const speed = 0.004 + Math.random() * 0.007;
+                const offsetRadius = (Math.random() - 0.5) * 2.8;
+
+                streamCol[i * 3] = 1.0;
+                streamCol[i * 3 + 1] = 0.88 + Math.random() * 0.12;
+                streamCol[i * 3 + 2] = 0.52 + Math.random() * 0.42;
+
+                streamData.push({ p, speed, offsetRadius });
+            }
+
+            streamGeo.setAttribute("position", new THREE.BufferAttribute(streamPos, 3));
+            streamGeo.setAttribute("color", new THREE.BufferAttribute(streamCol, 3));
+
+            const streamMat = new THREE.PointsMaterial({
+                size: 0.30,
+                map: glowTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.90,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const streamParticles = new THREE.Points(streamGeo, streamMat);
+            blackHoleGroup.add(streamParticles);
+
+            // ------------------------------------------------------------------
             // 5. DEEP SPACE STARFIELD & COSMIC EMBERS
             // ------------------------------------------------------------------
             const starCount = 2800;
@@ -719,6 +867,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 // 3. Photon Ring Pulsar Breathing
                 photonRingMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 2.4) * 0.015);
                 photonHaloMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 1.8 + 1.0) * 0.025);
+
+                // Code Waterfall Texture Scroll (Data Plunging into Singularity)
+                codeTextureObj.texture.offset.y -= 0.007 * scanSpeedMultiplier;
+
+                // Animate Ingestion Stream Particles
+                const sPos = streamGeo.attributes.position.array;
+                for (let i = 0; i < streamCount; i++) {
+                    const item = streamData[i];
+                    item.p += item.speed * scanSpeedMultiplier;
+                    if (item.p > 1.0) item.p = 0.0;
+
+                    const t = item.p;
+                    // Interpolate along the relativistic waterfall path
+                    const cx = 13.8 * (1 - t) + 2.6 * t + Math.sin(t * Math.PI) * 2.2;
+                    const cy = 8.5 * (1 - t) + 0.35 * t - Math.sin(t * Math.PI * 0.85) * 1.6;
+                    const cz = -9.0 * (1 - t) + 1.2 * t + Math.cos(t * Math.PI) * 1.8;
+
+                    // Add lateral turbulence
+                    sPos[i * 3] = cx + Math.sin(elapsedTime * 3.0 + i) * 0.35 + item.offsetRadius * (1 - t * 0.7);
+                    sPos[i * 3 + 1] = cy + Math.cos(elapsedTime * 2.5 + i) * 0.25;
+                    sPos[i * 3 + 2] = cz + (Math.random() - 0.5) * 0.2;
+                }
+                streamGeo.attributes.position.needsUpdate = true;
 
                 // 4. Mouse tilt lerp
                 blackHoleGroup.rotation.x += (targetRotX - blackHoleGroup.rotation.x) * 0.04;

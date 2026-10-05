@@ -2235,17 +2235,38 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Automatic choreographed sequence:
-        // Hands glide inward over 2.1s
-        // Direct fingertip contact at ~2.05s
-        contactTimer = setTimeout(() => {
-            triggerContactEvent();
-        }, 2050);
+        function preloadImage(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                img.src = src;
+                if (img.complete) resolve();
+            });
+        }
 
-        // Smooth reveal of website at 2.45s
-        revealTimer = setTimeout(() => {
-            finishIntro(false);
-        }, 2450);
+        // Ensure both hand assets are 100% decoded in memory before animation begins
+        // This guarantees silky-smooth 60fps/120fps playback across all network speeds
+        Promise.all([
+            preloadImage("static/images/hand_left.png"),
+            preloadImage("static/images/hand_right.png")
+        ]).then(() => {
+            if (isFinished) return;
+
+            // Kick off hardware-accelerated CSS animations simultaneously
+            if (handLeft) handLeft.classList.add("animate-glide");
+            if (handRight) handRight.classList.add("animate-glide");
+
+            // Direct fingertip contact at ~2.1s
+            contactTimer = setTimeout(() => {
+                triggerContactEvent();
+            }, 2100);
+
+            // Smooth curtain reveal of website at ~2.55s
+            revealTimer = setTimeout(() => {
+                finishIntro(false);
+            }, 2550);
+        });
 
         // Allow instant reveal on clicking anywhere on overlay
         overlay.addEventListener("click", (e) => {

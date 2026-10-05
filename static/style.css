@@ -2598,12 +2598,15 @@ body.cyber-platform-body {
 .hand-wrapper {
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translate3d(0, -50%, 0);
     width: min(54vw, 720px);
     max-height: 480px;
     display: flex;
     align-items: center;
     will-change: transform, opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
 .hand-img {
@@ -2612,29 +2615,34 @@ body.cyber-platform-body {
     display: block;
     user-select: none;
     -webkit-user-drag: none;
-    filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.18));
-    transition: filter 0.4s ease;
+    transition: filter 0.3s ease;
 }
 
-/* Left Hand (Adam): anchored so its right edge (index finger) meets 50% screen center */
+/* Left Hand (Adam): starts hidden/offset until image is decoded, then glides */
 .hand-left-wrapper {
     right: 50%;
     justify-content: flex-end;
-    transform: translateY(-50%) translateX(-42vw);
-    opacity: 0.15;
-    animation: leftHandGlideIn 2.1s cubic-bezier(0.12, 0.95, 0.28, 1) forwards;
+    transform: translate3d(-42vw, -50%, 0);
+    opacity: 0;
 }
 
-/* Right Hand (Divine/AI Matrix): anchored so its left edge (index finger) meets 50% screen center */
+.hand-left-wrapper.animate-glide {
+    animation: leftHandGlideIn 2.2s cubic-bezier(0.12, 0.95, 0.28, 1) forwards;
+}
+
+/* Right Hand (Divine/AI Matrix): starts hidden/offset until image is decoded, then glides */
 .hand-right-wrapper {
     left: 50%;
     justify-content: flex-start;
-    transform: translateY(-50%) translateX(42vw);
-    opacity: 0.15;
-    animation: rightHandGlideIn 2.1s cubic-bezier(0.12, 0.95, 0.28, 1) forwards;
+    transform: translate3d(42vw, -50%, 0);
+    opacity: 0;
 }
 
-/* Contact glow state */
+.hand-right-wrapper.animate-glide {
+    animation: rightHandGlideIn 2.2s cubic-bezier(0.12, 0.95, 0.28, 1) forwards;
+}
+
+/* Contact glow state triggered on fingertip meeting */
 .hand-wrapper.contact-glow .hand-img {
     filter: drop-shadow(0 0 35px rgba(56, 189, 248, 0.95)) brightness(1.25);
 }
@@ -2648,39 +2656,39 @@ body.cyber-platform-body {
     animation-duration: 0.35s !important;
 }
 
-/* Smooth keyframes */
+/* Smooth keyframes using translate3d for 60fps/120fps hardware acceleration */
 @keyframes leftHandGlideIn {
     0% {
-        transform: translateY(-50%) translateX(-42vw);
+        transform: translate3d(-42vw, -50%, 0);
         opacity: 0.15;
     }
-    40% {
-        opacity: 0.85;
+    35% {
+        opacity: 0.9;
     }
     85% {
-        transform: translateY(-50%) translateX(-2px);
+        transform: translate3d(-2px, -50%, 0);
         opacity: 1;
     }
     100% {
-        transform: translateY(-50%) translateX(0px);
+        transform: translate3d(0px, -50%, 0);
         opacity: 1;
     }
 }
 
 @keyframes rightHandGlideIn {
     0% {
-        transform: translateY(-50%) translateX(42vw);
+        transform: translate3d(42vw, -50%, 0);
         opacity: 0.15;
     }
-    40% {
-        opacity: 0.85;
+    35% {
+        opacity: 0.9;
     }
     85% {
-        transform: translateY(-50%) translateX(2px);
+        transform: translate3d(2px, -50%, 0);
         opacity: 1;
     }
     100% {
-        transform: translateY(-50%) translateX(0px);
+        transform: translate3d(0px, -50%, 0);
         opacity: 1;
     }
 }

@@ -285,9 +285,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --------------------------------------------------------------------------
-    // 3. 3D WEBGL ENGINE: MECHANICAL TURBINE SPIRAL, BOKEH PARTICLES & CYBER WAVE
+    // 3. 3D WEBGL ENGINE: INTERSTELLAR GARGANTUA BLACK HOLE & ACCRETION VORTEX
     // --------------------------------------------------------------------------
-    let setTurbineScanning = null;
+    let setTurbineScanning = null; // Scan acceleration hook
 
     function initThreeBackground() {
         const webglCanvas = document.getElementById("webgl-canvas");
@@ -298,7 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            // Renderer
+            // Renderer with high dynamic range alpha
             const renderer = new THREE.WebGLRenderer({
                 canvas: webglCanvas,
                 alpha: true,
@@ -308,257 +308,333 @@ document.addEventListener("DOMContentLoaded", () => {
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            // Scene & Camera
+            // Scene & Perspective Camera
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 24);
+            camera.position.set(0, 2.2, 24);
 
-            // Lighting System
-            const ambientLight = new THREE.AmbientLight(0x0a1128, 2.2);
+            // Subtle Deep Space Ambient Illumination
+            const ambientLight = new THREE.AmbientLight(0x180d28, 1.8);
             scene.add(ambientLight);
 
-            // Directional key light (Electric Cyan)
-            const keyLight = new THREE.DirectionalLight(0x00f2fe, 3.2);
-            keyLight.position.set(15, 18, 14);
-            scene.add(keyLight);
-
-            // Directional rim light (Crisp White/Silver for metallic edge reflections)
-            const rimLight = new THREE.DirectionalLight(0xffffff, 2.0);
-            rimLight.position.set(-18, -12, -10);
-            scene.add(rimLight);
-
-            // Core Point Light
-            const coreLight = new THREE.PointLight(0x00f2fe, 3.5, 35);
+            // Core Singularity & Accretion Glow Light (Solar Amber/Gold)
+            const coreLight = new THREE.PointLight(0xffa726, 4.5, 50);
             coreLight.position.set(0, 0, 0);
             scene.add(coreLight);
 
-            // ----------------------------------------------------------------------
-            // 3D MECHANICAL TURBINE SPIRAL HIERARCHY
-            // ----------------------------------------------------------------------
-            const turbineRoot = new THREE.Group();
-            scene.add(turbineRoot);
+            // Hot Photon Flash PointLight (White-Gold)
+            const photonLight = new THREE.PointLight(0xfff8e7, 3.2, 30);
+            photonLight.position.set(0, 0, 0);
+            scene.add(photonLight);
 
-            const rotorGroup = new THREE.Group();
-            turbineRoot.add(rotorGroup);
+            // Master Black Hole Transformation Hierarchy
+            const blackHoleGroup = new THREE.Group();
+            scene.add(blackHoleGroup);
 
-            // Generate Soft Bokeh Disc Texture
-            function createBokehTexture() {
-                const bCanvas = document.createElement("canvas");
-                bCanvas.width = 128;
-                bCanvas.height = 128;
-                const bCtx = bCanvas.getContext("2d");
-                const grad = bCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
-                grad.addColorStop(0, "rgba(255, 255, 255, 1)");
-                grad.addColorStop(0.2, "rgba(0, 242, 254, 0.85)");
-                grad.addColorStop(0.55, "rgba(0, 242, 254, 0.28)");
-                grad.addColorStop(0.85, "rgba(2, 132, 199, 0.08)");
-                grad.addColorStop(1, "rgba(0, 0, 0, 0)");
-                bCtx.fillStyle = grad;
-                bCtx.fillRect(0, 0, 128, 128);
-                return new THREE.CanvasTexture(bCanvas);
+            // ------------------------------------------------------------------
+            // TEXTURE GENERATOR: Soft Glowing Accretion Embers & Stars
+            // ------------------------------------------------------------------
+            function createGlowDiscTexture() {
+                const canvas = document.createElement("canvas");
+                canvas.width = 64;
+                canvas.height = 64;
+                const ctx = canvas.getContext("2d");
+                const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+                grad.addColorStop(0, "rgba(255, 255, 255, 1.0)");
+                grad.addColorStop(0.2, "rgba(255, 220, 140, 0.95)");
+                grad.addColorStop(0.5, "rgba(255, 130, 35, 0.45)");
+                grad.addColorStop(0.8, "rgba(220, 50, 15, 0.15)");
+                grad.addColorStop(1.0, "rgba(0, 0, 0, 0)");
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 64, 64);
+                return new THREE.CanvasTexture(canvas);
             }
 
-            const bokehTexture = createBokehTexture();
-
-            // Materials for the Metallic Turbine
-            const metallicVaneMaterial = new THREE.MeshStandardMaterial({
-                color: 0x121d30,
-                metalness: 0.92,
-                roughness: 0.22,
-                emissive: 0x02162a,
-                emissiveIntensity: 0.45
-            });
-
-            const chromeRimMaterial = new THREE.MeshStandardMaterial({
-                color: 0x1e3a5f,
-                metalness: 0.95,
-                roughness: 0.15,
-                emissive: 0x00f2fe,
-                emissiveIntensity: 0.25
-            });
-
-            const glowingAccentMaterial = new THREE.MeshBasicMaterial({
-                color: 0x00f2fe,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.45
-            });
-
-            // PROCEDURAL SLATTED CURVED VANES (TURBINE ROTOR)
-            const vaneCount = 36;
-            const radius = 4.2;
-            const vaneHeight = 6.2;
-            const vaneGeometry = new THREE.BoxGeometry(0.12, 1.8, vaneHeight);
-
-            for (let i = 0; i < vaneCount; i++) {
-                const angle = (i / vaneCount) * Math.PI * 2;
-                const vaneMesh = new THREE.Mesh(vaneGeometry, metallicVaneMaterial);
-
-                // Position around cylindrical radius
-                const vx = Math.cos(angle) * radius;
-                const vy = Math.sin(angle) * radius;
-                vaneMesh.position.set(vx, vy, 0);
-
-                // Pitch angle: angled louver fins forming a helical vortex
-                vaneMesh.rotation.z = angle + Math.PI / 4;
-                vaneMesh.rotation.x = 0.35; // Helical pitch twist
-                vaneMesh.rotation.y = angle * 0.15;
-
-                rotorGroup.add(vaneMesh);
+            function createStarTexture() {
+                const canvas = document.createElement("canvas");
+                canvas.width = 32;
+                canvas.height = 32;
+                const ctx = canvas.getContext("2d");
+                const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+                grad.addColorStop(0, "rgba(255, 255, 255, 1.0)");
+                grad.addColorStop(0.3, "rgba(220, 235, 255, 0.7)");
+                grad.addColorStop(1.0, "rgba(0, 0, 0, 0)");
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 32, 32);
+                return new THREE.CanvasTexture(canvas);
             }
 
-            // Central Core Hub & Concentric Structural Rings
-            const hubGeo = new THREE.CylinderGeometry(1.6, 1.6, 6.4, 32);
-            const hubMesh = new THREE.Mesh(hubGeo, metallicVaneMaterial);
-            hubMesh.rotation.x = Math.PI / 2;
-            rotorGroup.add(hubMesh);
+            const glowTexture = createGlowDiscTexture();
+            const starTexture = createStarTexture();
 
-            const innerGlowCylinder = new THREE.CylinderGeometry(0.9, 0.9, 6.6, 24);
-            const innerGlowMat = new THREE.MeshBasicMaterial({
-                color: 0x00f2fe,
-                transparent: true,
-                opacity: 0.75
+            // ------------------------------------------------------------------
+            // 1. EVENT HORIZON: Pure Black Shadow Sphere
+            // ------------------------------------------------------------------
+            const horizonRadius = 3.35;
+            const horizonGeo = new THREE.SphereGeometry(horizonRadius, 64, 64);
+            const horizonMat = new THREE.MeshBasicMaterial({
+                color: 0x000000
             });
-            const innerMesh = new THREE.Mesh(innerGlowCylinder, innerGlowMat);
-            innerMesh.rotation.x = Math.PI / 2;
-            rotorGroup.add(innerMesh);
+            const horizonMesh = new THREE.Mesh(horizonGeo, horizonMat);
+            blackHoleGroup.add(horizonMesh);
 
-            // Precision Outer & Inner Torus Rings
-            const outerRingGeo1 = new THREE.TorusGeometry(radius + 0.9, 0.06, 16, 80);
-            const outerRingMesh1 = new THREE.Mesh(outerRingGeo1, chromeRimMaterial);
-            rotorGroup.add(outerRingMesh1);
-
-            const outerRingGeo2 = new THREE.TorusGeometry(radius + 0.9, 0.06, 16, 80);
-            const outerRingMesh2 = new THREE.Mesh(outerRingGeo2, chromeRimMaterial);
-            outerRingMesh2.position.z = -vaneHeight / 2 + 0.2;
-            rotorGroup.add(outerRingMesh2);
-
-            const outerRingGeo3 = new THREE.TorusGeometry(radius + 0.9, 0.06, 16, 80);
-            const outerRingMesh3 = new THREE.Mesh(outerRingGeo3, chromeRimMaterial);
-            outerRingMesh3.position.z = vaneHeight / 2 - 0.2;
-            rotorGroup.add(outerRingMesh3);
-
-            // Delicate Wireframe Concentric Gyro Cage
-            const cageGeo = new THREE.IcosahedronGeometry(radius + 1.6, 1);
-            const cageMesh = new THREE.Mesh(cageGeo, glowingAccentMaterial);
-            turbineRoot.add(cageMesh);
-
-            // ----------------------------------------------------------------------
-            // FLOATING DEPTH-OF-FIELD BOKEH DUST PARTICLES
-            // ----------------------------------------------------------------------
-            const bokehCount = 65;
-            const bokehGeo = new THREE.BufferGeometry();
-            const bokehPos = new Float32Array(bokehCount * 3);
-            const bokehSpeeds = new Float32Array(bokehCount * 3);
-
-            for (let i = 0; i < bokehCount; i++) {
-                bokehPos[i * 3] = (Math.random() - 0.5) * 40;
-                bokehPos[i * 3 + 1] = (Math.random() - 0.5) * 30;
-                bokehPos[i * 3 + 2] = Math.random() * 20 - 5; // Near camera for bokeh blur
-
-                bokehSpeeds[i * 3] = (Math.random() - 0.5) * 0.015;
-                bokehSpeeds[i * 3 + 1] = Math.random() * 0.02 + 0.008; // Gentle upward drift
-                bokehSpeeds[i * 3 + 2] = (Math.random() - 0.5) * 0.01;
-            }
-
-            bokehGeo.setAttribute("position", new THREE.BufferAttribute(bokehPos, 3));
-
-            const bokehMat = new THREE.PointsMaterial({
-                size: 2.8,
-                map: bokehTexture,
+            // ------------------------------------------------------------------
+            // 2. PHOTON SPHERE: Razor-Thin White-Hot Lensing Boundary Ring
+            // ------------------------------------------------------------------
+            const photonRingGeo = new THREE.RingGeometry(horizonRadius + 0.04, horizonRadius + 0.38, 96);
+            const photonRingMat = new THREE.MeshBasicMaterial({
+                color: 0xfff6d4,
+                side: THREE.DoubleSide,
                 transparent: true,
-                opacity: 0.45,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending
             });
+            const photonRingMesh = new THREE.Mesh(photonRingGeo, photonRingMat);
+            photonRingMesh.rotation.x = Math.PI / 2;
+            blackHoleGroup.add(photonRingMesh);
 
-            const bokehSystem = new THREE.Points(bokehGeo, bokehMat);
-            scene.add(bokehSystem);
-
-            // Atmospheric Micro Cyber Dust
-            const dustCount = 260;
-            const dustGeo = new THREE.BufferGeometry();
-            const dustPos = new Float32Array(dustCount * 3);
-
-            for (let i = 0; i < dustCount; i++) {
-                dustPos[i * 3] = (Math.random() - 0.5) * 50;
-                dustPos[i * 3 + 1] = (Math.random() - 0.5) * 40;
-                dustPos[i * 3 + 2] = (Math.random() - 0.5) * 35;
-            }
-
-            dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
-
-            const dustMat = new THREE.PointsMaterial({
-                size: 0.65,
-                color: 0x00f2fe,
+            // Secondary outer photon halo ring
+            const photonHaloGeo = new THREE.RingGeometry(horizonRadius + 0.02, horizonRadius + 0.75, 96);
+            const photonHaloMat = new THREE.MeshBasicMaterial({
+                color: 0xffa726,
+                side: THREE.DoubleSide,
                 transparent: true,
-                opacity: 0.5,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
+                opacity: 0.55,
+                blending: THREE.AdditiveBlending
             });
+            const photonHaloMesh = new THREE.Mesh(photonHaloGeo, photonHaloMat);
+            photonHaloMesh.rotation.x = Math.PI / 2;
+            blackHoleGroup.add(photonHaloMesh);
 
-            const dustSystem = new THREE.Points(dustGeo, dustMat);
-            scene.add(dustSystem);
+            // ------------------------------------------------------------------
+            // 3. PRIMARY ACCRETION DISK (Keplerian Relativistic Particle Cloud)
+            // ------------------------------------------------------------------
+            const diskCount = 28000;
+            const diskGeo = new THREE.BufferGeometry();
+            const diskPos = new Float32Array(diskCount * 3);
+            const diskCol = new Float32Array(diskCount * 3);
+            const diskData = []; // Store radius, theta, speed, Doppler offset
 
-            // ----------------------------------------------------------------------
-            // UNDULATING 3D CYBER WAVE MESH (Point Cloud Terrain)
-            // ----------------------------------------------------------------------
-            const waveCols = 45;
-            const waveRows = 25;
-            const waveCount = waveCols * waveRows;
-            const waveGeo = new THREE.BufferGeometry();
-            const wavePos = new Float32Array(waveCount * 3);
+            const rMin = horizonRadius + 0.5;
+            const rMax = 15.5;
 
-            for (let r = 0; r < waveRows; r++) {
-                for (let c = 0; c < waveCols; c++) {
-                    const idx = (r * waveCols + c) * 3;
-                    wavePos[idx] = (c / (waveCols - 1) - 0.5) * 46;
-                    wavePos[idx + 1] = -9.0;
-                    wavePos[idx + 2] = (r / (waveRows - 1) - 0.5) * 32 - 4;
-                }
-            }
+            for (let i = 0; i < diskCount; i++) {
+                // Non-linear radial distribution (denser toward the event horizon)
+                const u = Math.random();
+                const r = rMin + (rMax - rMin) * Math.pow(u, 1.8);
+                const theta = Math.random() * Math.PI * 2;
 
-            waveGeo.setAttribute("position", new THREE.BufferAttribute(wavePos, 3));
+                // Keplerian velocity: inner particles orbit much faster than outer
+                const speed = (0.55 / Math.pow(r, 0.75)) * (0.88 + Math.random() * 0.24);
 
-            const waveMat = new THREE.PointsMaterial({
-                size: 0.45,
-                color: 0x0284c7,
-                transparent: true,
-                opacity: 0.35,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
+                // Vertical thickness flares with distance
+                const ySpread = (Math.random() - 0.5) * 0.28 * Math.pow((r - rMin) / (rMax - rMin), 1.2);
 
-            const waveSystem = new THREE.Points(waveGeo, waveMat);
-            scene.add(waveSystem);
+                const x = r * Math.cos(theta);
+                const z = r * Math.sin(theta);
 
-            // ----------------------------------------------------------------------
-            // DYNAMIC LAYOUT & POSITIONING
-            // ----------------------------------------------------------------------
-            function updateTurbinePosition() {
-                const isDesktop = window.innerWidth >= 992;
-                if (isDesktop) {
-                    turbineRoot.position.set(6.2, 0.4, 0);
-                    turbineRoot.scale.set(1.0, 1.0, 1.0);
-                } else if (window.innerWidth >= 640) {
-                    turbineRoot.position.set(0, -1.0, -2);
-                    turbineRoot.scale.set(0.72, 0.72, 0.72);
+                diskPos[i * 3] = x;
+                diskPos[i * 3 + 1] = ySpread;
+                diskPos[i * 3 + 2] = z;
+
+                // Color gradient: White-Hot Golden Core -> Fiery Solar Amber -> Deep Cosmic Crimson
+                const t = (r - rMin) / (rMax - rMin);
+                let cr, cg, cb;
+                if (t < 0.18) {
+                    cr = 1.0;
+                    cg = 0.95 - t * 0.8;
+                    cb = 0.82 - t * 2.5;
+                } else if (t < 0.55) {
+                    const k = (t - 0.18) / 0.37;
+                    cr = 1.0;
+                    cg = 0.80 - k * 0.45;
+                    cb = 0.18 - k * 0.12;
                 } else {
-                    turbineRoot.position.set(0, -1.5, -4);
-                    turbineRoot.scale.set(0.55, 0.55, 0.55);
+                    const k = (t - 0.55) / 0.45;
+                    cr = 1.0 - k * 0.48;
+                    cg = 0.35 - k * 0.28;
+                    cb = 0.08 + k * 0.08;
+                }
+
+                diskCol[i * 3] = Math.max(0, Math.min(1, cr));
+                diskCol[i * 3 + 1] = Math.max(0, Math.min(1, cg));
+                diskCol[i * 3 + 2] = Math.max(0, Math.min(1, cb));
+
+                diskData.push({ r, theta, speed, y: ySpread, baseR: cr, baseG: cg, baseB: cb });
+            }
+
+            diskGeo.setAttribute("position", new THREE.BufferAttribute(diskPos, 3));
+            diskGeo.setAttribute("color", new THREE.BufferAttribute(diskCol, 3));
+
+            const diskMat = new THREE.PointsMaterial({
+                size: 0.32,
+                map: glowTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const diskParticles = new THREE.Points(diskGeo, diskMat);
+            blackHoleGroup.add(diskParticles);
+
+            // ------------------------------------------------------------------
+            // 4. GRAVITATIONAL LENSING ARCS: Iconic Gargantua Upper & Lower Einstein Halos
+            // ------------------------------------------------------------------
+            const lensCount = 10000;
+            const lensGeo = new THREE.BufferGeometry();
+            const lensPos = new Float32Array(lensCount * 3);
+            const lensCol = new Float32Array(lensCount * 3);
+            const lensData = [];
+
+            for (let i = 0; i < lensCount; i++) {
+                const isUpper = i % 2 === 0;
+                const u = Math.random();
+                const r = rMin + (rMax * 0.65 - rMin) * Math.pow(u, 1.4);
+                const angle = Math.random() * Math.PI;
+                const speed = (0.55 / Math.pow(r, 0.75)) * (0.9 + Math.random() * 0.2);
+
+                const x = r * Math.cos(angle);
+                const arcLift = Math.sqrt(Math.max(0, r * r - x * x)) * 0.96 + 0.35;
+                const y = (isUpper ? 1 : -0.7) * arcLift + (Math.random() - 0.5) * 0.3;
+                const z = -0.4 - (r - rMin) * 0.22;
+
+                lensPos[i * 3] = x;
+                lensPos[i * 3 + 1] = y;
+                lensPos[i * 3 + 2] = z;
+
+                const t = (r - rMin) / (rMax * 0.65 - rMin);
+                lensCol[i * 3] = 1.0;
+                lensCol[i * 3 + 1] = Math.max(0, 0.92 - t * 0.5);
+                lensCol[i * 3 + 2] = Math.max(0, 0.70 - t * 0.6);
+
+                lensData.push({ r, angle, speed, isUpper, baseLift: arcLift });
+            }
+
+            lensGeo.setAttribute("position", new THREE.BufferAttribute(lensPos, 3));
+            lensGeo.setAttribute("color", new THREE.BufferAttribute(lensCol, 3));
+
+            const lensMat = new THREE.PointsMaterial({
+                size: 0.36,
+                map: glowTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.92,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const lensParticles = new THREE.Points(lensGeo, lensMat);
+            blackHoleGroup.add(lensParticles);
+
+            // ------------------------------------------------------------------
+            // 5. DEEP SPACE STARFIELD & COSMIC EMBERS
+            // ------------------------------------------------------------------
+            const starCount = 2800;
+            const starGeo = new THREE.BufferGeometry();
+            const starPos = new Float32Array(starCount * 3);
+            const starCol = new Float32Array(starCount * 3);
+
+            for (let i = 0; i < starCount; i++) {
+                const sx = (Math.random() - 0.5) * 320;
+                const sy = (Math.random() - 0.5) * 220;
+                const sz = -40 - Math.random() * 260;
+
+                starPos[i * 3] = sx;
+                starPos[i * 3 + 1] = sy;
+                starPos[i * 3 + 2] = sz;
+
+                const tint = Math.random();
+                if (tint < 0.45) {
+                    starCol[i * 3] = 1.0;
+                    starCol[i * 3 + 1] = 0.90 + Math.random() * 0.08;
+                    starCol[i * 3 + 2] = 0.72 + Math.random() * 0.15;
+                } else if (tint < 0.8) {
+                    starCol[i * 3] = 0.95;
+                    starCol[i * 3 + 1] = 0.96;
+                    starCol[i * 3 + 2] = 1.0;
+                } else {
+                    starCol[i * 3] = 0.75;
+                    starCol[i * 3 + 1] = 0.85;
+                    starCol[i * 3 + 2] = 1.0;
                 }
             }
-            updateTurbinePosition();
 
-            // MOUSE INTERACTION & PARALLAX
-            let targetRotX = 0.45;
-            let targetRotY = -0.38;
+            starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+            starGeo.setAttribute("color", new THREE.BufferAttribute(starCol, 3));
+
+            const starMat = new THREE.PointsMaterial({
+                size: 0.85,
+                map: starTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.88,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const starSystem = new THREE.Points(starGeo, starMat);
+            scene.add(starSystem);
+
+            // Floating Solar Embers
+            const emberCount = 350;
+            const emberGeo = new THREE.BufferGeometry();
+            const emberPos = new Float32Array(emberCount * 3);
+            const emberSpeeds = new Float32Array(emberCount * 3);
+
+            for (let i = 0; i < emberCount; i++) {
+                emberPos[i * 3] = (Math.random() - 0.5) * 44;
+                emberPos[i * 3 + 1] = (Math.random() - 0.5) * 32;
+                emberPos[i * 3 + 2] = (Math.random() - 0.5) * 20 + 2;
+
+                emberSpeeds[i * 3] = (Math.random() - 0.5) * 0.012;
+                emberSpeeds[i * 3 + 1] = 0.008 + Math.random() * 0.016;
+                emberSpeeds[i * 3 + 2] = (Math.random() - 0.5) * 0.012;
+            }
+
+            emberGeo.setAttribute("position", new THREE.BufferAttribute(emberPos, 3));
+
+            const emberMat = new THREE.PointsMaterial({
+                size: 0.42,
+                map: glowTexture,
+                color: 0xffb84d,
+                transparent: true,
+                opacity: 0.75,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const emberSystem = new THREE.Points(emberGeo, emberMat);
+            scene.add(emberSystem);
+
+            // ------------------------------------------------------------------
+            // DYNAMIC LAYOUT & CENTERING
+            // ------------------------------------------------------------------
+            function updateBlackHolePosition() {
+                const w = window.innerWidth;
+                if (w >= 992) {
+                    blackHoleGroup.position.set(0, 1.4, 0);
+                    blackHoleGroup.scale.set(1.0, 1.0, 1.0);
+                } else if (w >= 640) {
+                    blackHoleGroup.position.set(0, 0.8, -2);
+                    blackHoleGroup.scale.set(0.78, 0.78, 0.78);
+                } else {
+                    blackHoleGroup.position.set(0, 0.4, -4);
+                    blackHoleGroup.scale.set(0.62, 0.62, 0.62);
+                }
+            }
+            updateBlackHolePosition();
+
+            // MOUSE GRAVITATIONAL PARALLAX
+            let targetRotX = 0.22;
+            let targetRotY = 0.0;
 
             window.addEventListener("mousemove", (e) => {
                 const normX = (e.clientX / window.innerWidth) * 2 - 1;
                 const normY = -(e.clientY / window.innerHeight) * 2 + 1;
-                targetRotX = 0.45 - normY * 0.32;
-                targetRotY = -0.38 + normX * 0.38;
+                targetRotX = 0.22 - normY * 0.18;
+                targetRotY = normX * 0.25;
             }, { passive: true });
 
             // SCROLL PROGRESSION
@@ -568,19 +644,18 @@ document.addEventListener("DOMContentLoaded", () => {
             }, { passive: true });
 
             // SCAN ACCELERATION STATE
-            let targetSpinSpeed = 0.007;
-            let currentSpinSpeed = 0.007;
-            let targetCoreIntensity = 3.5;
+            let scanSpeedMultiplier = 1.0;
+            let targetCoreIntensity = 4.5;
 
             setTurbineScanning = function(isScanning) {
                 if (isScanning) {
-                    targetSpinSpeed = 0.048; // High speed scan vortex
-                    targetCoreIntensity = 8.0;
-                    keyLight.intensity = 5.0;
+                    scanSpeedMultiplier = 3.4;
+                    targetCoreIntensity = 9.5;
+                    photonLight.intensity = 7.0;
                 } else {
-                    targetSpinSpeed = 0.007; // Return to idle pace
-                    targetCoreIntensity = 3.5;
-                    keyLight.intensity = 3.2;
+                    scanSpeedMultiplier = 1.0;
+                    targetCoreIntensity = 4.5;
+                    photonLight.intensity = 3.2;
                 }
             };
 
@@ -592,70 +667,92 @@ document.addEventListener("DOMContentLoaded", () => {
                 camera.updateProjectionMatrix();
                 renderer.setSize(w, h);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                updateTurbinePosition();
+                updateBlackHolePosition();
             });
 
-            // ----------------------------------------------------------------------
-            // RENDER LOOP (LOCKED 60 FPS)
-            // ----------------------------------------------------------------------
+            // ------------------------------------------------------------------
+            // RENDER LOOP (60 FPS KEPLERIAN DYNAMICS)
+            // ------------------------------------------------------------------
             let clock = new THREE.Clock();
 
             function animate() {
                 requestAnimationFrame(animate);
+                const delta = clock.getDelta();
                 const elapsedTime = clock.getElapsedTime();
 
-                // Smooth rotation dampening (lerp)
-                currentSpinSpeed += (targetSpinSpeed - currentSpinSpeed) * 0.06;
-                rotorGroup.rotation.z += currentSpinSpeed;
-                cageMesh.rotation.y -= currentSpinSpeed * 0.4;
-                cageMesh.rotation.x += currentSpinSpeed * 0.2;
+                // 1. Orbital dynamics of the Primary Accretion Disk
+                const dPos = diskGeo.attributes.position.array;
+                const dCol = diskGeo.attributes.color.array;
 
-                // Mouse tilt lerp
-                turbineRoot.rotation.x += (targetRotX - turbineRoot.rotation.x) * 0.05;
-                turbineRoot.rotation.y += (targetRotY - turbineRoot.rotation.y) * 0.05;
+                for (let i = 0; i < diskCount; i++) {
+                    const item = diskData[i];
+                    item.theta += item.speed * delta * 2.8 * scanSpeedMultiplier;
 
-                // Core light intensity breathing / scan surge
+                    const x = item.r * Math.cos(item.theta);
+                    const z = item.r * Math.sin(item.theta);
+
+                    dPos[i * 3] = x;
+                    dPos[i * 3 + 2] = z;
+
+                    const dopplerFactor = 1.0 - (x / item.r) * 0.42;
+                    dCol[i * 3] = Math.min(1.0, item.baseR * dopplerFactor);
+                    dCol[i * 3 + 1] = Math.min(1.0, item.baseG * dopplerFactor);
+                    dCol[i * 3 + 2] = Math.min(1.0, item.baseB * dopplerFactor);
+                }
+                diskGeo.attributes.position.needsUpdate = true;
+                diskGeo.attributes.color.needsUpdate = true;
+
+                // 2. Orbital dynamics of the Lensing Halos (Einstein Ring)
+                const lPos = lensGeo.attributes.position.array;
+                for (let i = 0; i < lensCount; i++) {
+                    const item = lensData[i];
+                    item.angle += item.speed * delta * 2.6 * scanSpeedMultiplier;
+                    const x = item.r * Math.cos(item.angle);
+                    const lift = Math.sqrt(Math.max(0, item.r * item.r - x * x)) * 0.96 + 0.35;
+                    const y = (item.isUpper ? 1 : -0.7) * lift;
+
+                    lPos[i * 3] = x;
+                    lPos[i * 3 + 1] = y;
+                }
+                lensGeo.attributes.position.needsUpdate = true;
+
+                // 3. Photon Ring Pulsar Breathing
+                photonRingMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 2.4) * 0.015);
+                photonHaloMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 1.8 + 1.0) * 0.025);
+
+                // 4. Mouse tilt lerp
+                blackHoleGroup.rotation.x += (targetRotX - blackHoleGroup.rotation.x) * 0.04;
+                blackHoleGroup.rotation.y += (targetRotY - blackHoleGroup.rotation.y) * 0.04;
+
+                // 5. Scroll parallax drift
+                const scrollProgress = Math.min(scrollY / (document.documentElement.scrollHeight || 1), 1);
+                blackHoleGroup.position.y += ((1.4 - scrollProgress * 3.8) - blackHoleGroup.position.y) * 0.04;
+
+                // 6. Core lighting lerp
                 coreLight.intensity += (targetCoreIntensity - coreLight.intensity) * 0.08;
 
-                // Scroll parallax adaptation
-                const scrollProgress = Math.min(scrollY / (document.documentElement.scrollHeight || 1), 1);
-                turbineRoot.position.y += ((0.4 - scrollProgress * 3.5) - turbineRoot.position.y) * 0.04;
+                // 7. Slow deep space starfield rotation
+                starSystem.rotation.y = elapsedTime * 0.003;
 
-                // Animate Floating Bokeh Discs
-                const bPos = bokehGeo.attributes.position.array;
-                for (let i = 0; i < bokehCount; i++) {
-                    bPos[i * 3 + 1] += bokehSpeeds[i * 3 + 1];
-                    bPos[i * 3] += Math.sin(elapsedTime * 0.6 + i) * 0.01;
+                // 8. Cosmic Embers drift
+                const ePos = emberGeo.attributes.position.array;
+                for (let i = 0; i < emberCount; i++) {
+                    ePos[i * 3] += emberSpeeds[i * 3];
+                    ePos[i * 3 + 1] += emberSpeeds[i * 3 + 1];
+                    ePos[i * 3 + 2] += emberSpeeds[i * 3 + 2];
 
-                    // Wrap around top
-                    if (bPos[i * 3 + 1] > 20) {
-                        bPos[i * 3 + 1] = -18;
-                        bPos[i * 3] = (Math.random() - 0.5) * 40;
+                    if (ePos[i * 3 + 1] > 22) {
+                        ePos[i * 3 + 1] = -18;
+                        ePos[i * 3] = (Math.random() - 0.5) * 44;
                     }
                 }
-                bokehGeo.attributes.position.needsUpdate = true;
-
-                // Animate Cyber Dust
-                dustSystem.rotation.y = elapsedTime * 0.015;
-                dustSystem.rotation.x = Math.sin(elapsedTime * 0.02) * 0.05;
-
-                // Animate Undulating Cyber Wave
-                const wPos = waveGeo.attributes.position.array;
-                for (let r = 0; r < waveRows; r++) {
-                    for (let c = 0; c < waveCols; c++) {
-                        const idx = (r * waveCols + c) * 3;
-                        const x = wPos[idx];
-                        const z = wPos[idx + 2];
-                        wPos[idx + 1] = -8.8 + Math.sin(x * 0.18 + elapsedTime * 1.4) * Math.cos(z * 0.22 + elapsedTime * 0.9) * 1.35;
-                    }
-                }
-                waveGeo.attributes.position.needsUpdate = true;
+                emberGeo.attributes.position.needsUpdate = true;
 
                 renderer.render(scene, camera);
             }
 
             animate();
-            console.info("PhishGuard 3D WebGL Engine initialized successfully.");
+            console.info("PhishGuard Cosmic Gargantua Black Hole 3D Engine initialized successfully.");
 
         } catch (err) {
             console.warn("WebGL initialization encountered an issue, falling back to 2D canvas:", err);
@@ -699,7 +796,7 @@ document.addEventListener("DOMContentLoaded", () => {
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(0, 242, 254, 0.45)";
+                ctx.fillStyle = "rgba(255, 184, 77, 0.45)";
                 ctx.fill();
             }
         }
@@ -727,7 +824,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const dy = nodes[i].y - nodes[j].y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < 125) {
-                        ctx.strokeStyle = `rgba(0, 242, 254, ${0.08 * (1 - dist / 125)})`;
+                        ctx.strokeStyle = `rgba(255, 184, 77, ${0.08 * (1 - dist / 125)})`;
                         ctx.lineWidth = 0.7;
                         ctx.beginPath();
                         ctx.moveTo(nodes[i].x, nodes[i].y);
@@ -1657,8 +1754,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (isGreeting) {
                 return `
-                    <div class="akera-agent-tag"><span>AKERA // ONLINE</span></div>
-                    <p><strong>Greetings, Operator.</strong> I am <strong>Akera</strong>, your neural cybersecurity copilot.</p>
+                    <div class="akera-agent-tag"><span>AKERA // SINGULARITY ONLINE</span></div>
+                    <p><strong>Greetings, Operator.</strong> I am <strong>Akera</strong>, your cosmic threat intelligence copilot.</p>
                     <p>I am online and ready. You can paste any link to run a zero-network threat analysis, or select one of the authorized security protocols below:</p>
                     ${getPrePromptsHtml()}
                 `;

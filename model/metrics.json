@@ -1,0 +1,106 @@
+{
+  "best_model": "Random Forest",
+  "dataset_summary": {
+    "total_samples": 6000,
+    "legitimate_samples": 3000,
+    "phishing_samples": 3000,
+    "train_samples": 4800,
+    "test_samples": 1200
+  },
+  "feature_columns": [
+    "url_length",
+    "num_dots",
+    "num_hyphens",
+    "num_special_chars",
+    "num_digits",
+    "has_at_symbol",
+    "has_ip_address",
+    "is_https",
+    "num_subdomains",
+    "suspicious_keywords",
+    "is_shortened",
+    "domain_length",
+    "path_length",
+    "num_slash",
+    "has_suspicious_tld"
+  ],
+  "feature_importance": {
+    "num_slash": 25.99,
+    "suspicious_keywords": 15.42,
+    "path_length": 9.54,
+    "domain_length": 7.47,
+    "num_dots": 7.31,
+    "is_https": 6.53,
+    "has_suspicious_tld": 5.33,
+    "url_length": 4.55,
+    "num_hyphens": 4.19,
+    "num_special_chars": 3.81,
+    "num_digits": 3.64,
+    "is_shortened": 2.94,
+    "num_subdomains": 2.43,
+    "has_ip_address": 0.58,
+    "has_at_symbol": 0.27
+  },
+  "comparison": {
+    "Random Forest": {
+      "model_name": "Random Forest",
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1_score": 100.0,
+      "confusion_matrix": [
+        [
+          600,
+          0
+        ],
+        [
+          0,
+          600
+        ]
+      ],
+      "raw_accuracy": 1.0,
+      "raw_f1": 1.0,
+      "training_time_sec": 0.088
+    },
+    "Decision Tree": {
+      "model_name": "Decision Tree",
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1_score": 100.0,
+      "confusion_matrix": [
+        [
+          600,
+          0
+        ],
+        [
+          0,
+          600
+        ]
+      ],
+      "raw_accuracy": 1.0,
+      "raw_f1": 1.0,
+      "training_time_sec": 0.002
+    },
+    "Logistic Regression": {
+      "model_name": "Logistic Regression",
+      "accuracy": 99.75,
+      "precision": 99.5,
+      "recall": 100.0,
+      "f1_score": 99.75,
+      "confusion_matrix": [
+        [
+          597,
+          3
+        ],
+        [
+          0,
+          600
+        ]
+      ],
+      "raw_accuracy": 0.9975,
+      "raw_f1": 0.9975062344139651,
+      "training_time_sec": 0.006
+    }
+  }
+}

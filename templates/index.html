@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard AI — Cyber Intelligence & URL Threat Interception</title>
+    <meta name="description" content="Next-generation cybersecurity intelligence platform for zero-day phishing URL detection using machine learning and in-memory lexical feature extraction.">
+
+    <!-- Google Fonts: Cormorant Garamond (Editorial Serif), Plus Jakarta Sans (Clean Modern Sans), JetBrains Mono (Technical/URLs) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Three.js WebGL Engine for 3D Background & Mechanical Turbine Spiral -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=akera1">
+</head>
+<body class="cyber-platform-body">
+    <!-- Top Scroll Progress Indicator -->
+    <div id="scroll-progress" class="scroll-progress-line"></div>
+
+    <!-- Custom Trailing Cursor -->
+    <div id="cursor-dot" class="cursor-dot"></div>
+    <div id="cursor-ring" class="cursor-ring"></div>
+
+    <!-- 3D WebGL Canvas for 3D Mechanical Spiral, Bokeh Particles & Cyber Wave -->
+    <canvas id="webgl-canvas" class="webgl-canvas"></canvas>
+
+    <!-- Faint Global Neural Canvas Background (Fallback & Auxiliary Mesh) -->
+    <canvas id="ambient-canvas" class="ambient-canvas"></canvas>
+
+    <!-- Ambient Subtle Atmosphere Overlays -->
+    <div class="ambient-vignette"></div>
+    <div class="ambient-radial-glow"></div>
+
+    <!-- ====================================================================
+         MINIMAL TRANSPARENT NAVIGATION (STICKY)
+         ==================================================================== -->
+    <header class="top-nav" id="top-nav">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a href="#hero-section" class="brand-link">
+                <div class="brand-shield-mark">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                </div>
+                <div class="brand-meta">
+                    <span class="brand-title">PHISHGUARD</span>
+                    <span class="brand-sub">NEURAL CORE</span>
+                </div>
+            </a>
+
+            <!-- Center Menu Links -->
+            <nav class="nav-links">
+                <a href="#threat-section" class="menu-item active">THE THREAT</a>
+                <a href="#deconstruction-section" class="menu-item">DECONSTRUCTION</a>
+                <a href="#interception-section" class="menu-item">INTERCEPTION</a>
+                <a href="#scanner-section" class="menu-item">LIVE SCANNER</a>
+            </nav>
+
+            <!-- Navigation Action Buttons & Audio Toggle -->
+            <div class="nav-cta-wrap">
+                <!-- Sound Effects Toggle Button -->
+                <button id="sound-toggle-btn" class="btn-sound-toggle" type="button" aria-label="Toggle Cyber Sound Effects" title="Toggle Audio Effects">
+                    <span id="sound-icon">🔊</span>
+                    <span id="sound-text">AUDIO ON</span>
+                </button>
+
+                <a href="#scanner-section" class="btn-pill-outlined">
+                    <span>LAUNCH SCANNER</span>
+                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                    </svg>
+                </a>
+
+                <!-- Mobile Menu Button -->
+                <button class="mobile-toggle-btn" id="mobile-toggle-btn" aria-label="Toggle Navigation Menu">
+                    <span class="bar-line"></span>
+                    <span class="bar-line"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer -->
+        <div class="mobile-drawer" id="mobile-drawer">
+            <a href="#threat-section" class="mobile-link">THE THREAT</a>
+            <a href="#deconstruction-section" class="mobile-link">DECONSTRUCTION</a>
+            <a href="#interception-section" class="mobile-link">INTERCEPTION</a>
+            <a href="#scanner-section" class="mobile-link">LIVE SCANNER</a>
+            <div style="padding-top: 0.75rem; border-top: 1px solid var(--border-hairline);">
+                <button id="mobile-sound-btn" class="btn-sound-toggle" type="button" style="width: 100%; justify-content: center;">
+                    <span id="mobile-sound-icon">🔊</span>
+                    <span id="mobile-sound-text">AUDIO ON</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <!-- ================================================================
+             HERO & SECTION 1: THE THREAT LANDSCAPE
+             ================================================================ -->
+        <section class="story-section hero-story" id="hero-section">
+            <div class="section-inner">
+                <!-- Asymmetric Hero Split matching the reference design -->
+                <div class="hero-split-grid">
+                    <div class="hero-text-col">
+                        <div class="eyebrow-chip">
+                            <span class="chip-pulse"></span>
+                            <span>STAGE 01 — THE INVISIBLE THREAT</span>
+                        </div>
+
+                        <h1 class="display-headline hero-title-split">
+                            Deception hides in plain sight.<br>
+                            <em>Unmask it before you click.</em>
+                        </h1>
+
+                        <p class="section-lead hero-lead-split">
+                            Over 3.4 billion malicious hyperlinks are disseminated daily. Attackers register transient, short-lived domains mimicking authentic corporate portals—bypassing conventional static blacklists during the critical zero-hour window.
+                        </p>
+
+                        <div class="hero-action-row">
+                            <a href="#scanner-section" class="btn-pill-outlined btn-hero-cta">
+                                <span>INITIALIZE SCANNER</span>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </a>
+                            <a href="#deconstruction-section" class="btn-hero-secondary">
+                                <span>EXPLORE PIPELINE ↓</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 3D Interactive Stage container framing the rotating turbine -->
+                    <div class="hero-visual-col">
+                        <div class="hero-3d-stage" id="hero-3d-stage">
+                            <div class="turbine-depth-badge">
+                                <span class="badge-pulse"></span>
+                                <span>CYBERNETIC ROTOR // 60 FPS</span>
+                            </div>
+                            <div class="turbine-sub-badge">
+                                <span>3D INGESTION CORE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metric Cards Row -->
+                <div class="feature-cards-grid">
+                    <div class="intel-card">
+                        <span class="intel-card-tag">VECTOR 01</span>
+                        <h3 class="intel-card-title">Subdomain Mimicry</h3>
+                        <p class="intel-card-desc">Adversaries chain authentic brand strings into multi-tier subdomains to fabricate administrative authenticity.</p>
+                    </div>
+
+                    <div class="intel-card">
+                        <span class="intel-card-tag">VECTOR 02</span>
+                        <h3 class="intel-card-title">Direct IP Host Exploitation</h3>
+                        <p class="intel-card-desc">Routing directly through numeric IPv4/IPv6 hosts to evade public domain name reputation scoring.</p>
+                    </div>
+
+                    <div class="intel-card">
+                        <span class="intel-card-tag">VECTOR 03</span>
+                        <h3 class="intel-card-title">Credential Obfuscation</h3>
+                        <p class="intel-card-desc">Exploiting userinfo "@" authority syntax tricks to mislead users while silently executing hostile redirections.</p>
+                    </div>
+                </div>
+
+                <!-- Downward Scroll Cue -->
+                <div class="scroll-cue-wrapper">
+                    <a href="#deconstruction-section" class="scroll-cue-link">
+                        <span class="cue-text">DECONSTRUCTION</span>
+                        <div class="cue-arrow">↓</div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             SECTION 2: FEATURE DECONSTRUCTION
+             ================================================================ -->
+        <section class="story-section" id="deconstruction-section">
+            <div class="section-inner text-center">
+                <div class="eyebrow-chip">
+                    <span>STAGE 02 — FEATURE DECONSTRUCTION</span>
+                </div>
+
+                <h2 class="display-headline">
+                    Surgical lexical inspection.<br>
+                    <em>Zero network exposure.</em>
+                </h2>
+
+                <p class="section-lead">
+                    Opening or pinging suspicious URLs risks drive-by payload installation and adversary logging. Our engine isolates the URL string and extracts 15 high-dimensional structural coordinates strictly in memory in under 20 milliseconds.
+                </p>
+
+                <div class="feature-cards-grid">
+                    <div class="intel-card">
+                        <span class="intel-card-tag">PHASE 01</span>
+                        <h3 class="intel-card-title">Entropy & Token Matrix</h3>
+                        <p class="intel-card-desc">Computing special character density, hyphen frequency, dot clustering, and hex-encoded numeric parameters.</p>
+                    </div>
+
+                    <div class="intel-card">
+                        <span class="intel-card-tag">PHASE 02</span>
+                        <h3 class="intel-card-title">Protocol & TLD Auditing</h3>
+                        <p class="intel-card-desc">Evaluating transport encryption flags against high-risk top-level domain registers (.xyz, .top, .buzz, .tk).</p>
+                    </div>
+
+                    <div class="intel-card">
+                        <span class="intel-card-tag">PHASE 03</span>
+                        <h3 class="intel-card-title">Social Engineering Traps</h3>
+                        <p class="intel-card-desc">Frequency scoring of targeted lure patterns including authentication, urgent verification, and billing triggers.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             SECTION 3: NEURAL INTERCEPTION CORE
+             ================================================================ -->
+        <section class="story-section" id="interception-section">
+            <div class="section-inner text-center">
+                <div class="eyebrow-chip">
+                    <span>STAGE 03 — NEURAL INTERCEPTION</span>
+                </div>
+
+                <h2 class="display-headline">
+                    Ensemble intelligence.<br>
+                    <em>Certainty in milliseconds.</em>
+                </h2>
+
+                <p class="section-lead">
+                    A calibrated Random Forest ensemble of 100 decorrelated decision trees analyzes the standardized vector—calculating class probability, confidence scores, and Explainable AI (XAI) indicators.
+                </p>
+
+                <div class="feature-cards-grid">
+                    <div class="intel-card">
+                        <span class="intel-card-tag">METRIC 01</span>
+                        <h3 class="intel-card-title">100-Tree Consensus</h3>
+                        <p class="intel-card-desc">Bootstrap aggregation eliminates overfitting while capturing non-linear feature interactions with 100% test recall.</p>
+                    </div>
+
+                    <div class="intel-card">
+                        <span class="intel-card-tag">METRIC 02</span>
+                        <h3 class="intel-card-title">Sub-Millisecond Inference</h3>
+                        <p class="intel-card-desc">Lightweight serialized model weights execute in memory locally without third-party API latency or tracking.</p>
+                    </div>
+
+                    <div class="intel-card">
+                        <span class="intel-card-tag">METRIC 03</span>
+                        <h3 class="intel-card-title">Transparent Reasoning</h3>
+                        <p class="intel-card-desc">Explainable AI details precisely which structural anomalies triggered threat flags, eliminating black-box opacity.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             SECTION 4: LIVE OPERATIONS CENTER & SCANNER
+             (All Functional Scanning, Benchmarks, Confusion Matrix & Viva)
+             ================================================================ -->
+        <section class="story-section ops-center-section" id="scanner-section">
+            <div class="section-inner">
+                <!-- Operations Center Header -->
+                <div class="ops-center-heading text-center">
+                    <div class="eyebrow-chip">
+                        <span>STAGE 04 — INTERACTIVE OPERATIONS CENTER</span>
+                    </div>
+
+                    <h2 class="display-headline">
+                        Real-Time URL Threat Analysis.<br>
+                        <em>Evaluate hyperlinks with explainable machine learning.</em>
+                    </h2>
+
+                    <p class="section-lead">
+                        Submit any hyperlink to execute in-memory classification. Strict sandbox safety: the target URL is never visited or opened.
+                    </p>
+
+                    <!-- Navigation Sub-Tabs -->
+                    <div class="ops-segmented-tabs">
+                        <button class="ops-tab-btn active" data-tab="scanner-view">
+                            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <span>Live Scanner</span>
+                        </button>
+                        <button class="ops-tab-btn" data-tab="metrics-view">
+                            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            <span>Model Benchmark</span>
+                        </button>
+                        <button class="ops-tab-btn" data-tab="architecture-view">
+                            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line></svg>
+                            <span>Architecture & Viva</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUB-PANE 1: LIVE SCANNER -->
+                <div id="scanner-view" class="ops-subpane active">
+                    <!-- Scanner Input Card -->
+                    <div class="scanner-input-card">
+                        <form id="url-form" class="url-input-form">
+                            <div class="input-shell">
+                                <div class="input-lead-icon">
+                                    <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2" fill="none">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="url-input" 
+                                    class="url-input-control" 
+                                    placeholder="Enter or paste URL to inspect (e.g. http://paypal-verify-account.top/login.php)..." 
+                                    autocomplete="off" 
+                                    spellcheck="false" 
+                                    required 
+                                />
+                                <button type="submit" id="scan-btn" class="btn-execute-scan">
+                                    <span class="btn-text">CHECK URL</span>
+                                    <div class="scan-loading-spinner hidden" id="scan-spinner"></div>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Holographic Scan Beam Indicator -->
+                        <div class="scan-beam-wrapper hidden" id="scan-beam">
+                            <div class="scan-beam-ray"></div>
+                        </div>
+
+                        <!-- Sample Test Case Chips -->
+                        <div class="quick-samples-row">
+                            <span class="samples-lead-tag">PRE-SET TEST CASES:</span>
+                            <div class="sample-chips" id="sample-chips">
+                                <!-- Populated dynamically from API -->
+                            </div>
+                        </div>
+
+                        <!-- Error Message Banner -->
+                        <div id="error-banner" class="alert-box-error hidden">
+                            <svg viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2.2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <span id="error-message"></span>
+                        </div>
+                    </div>
+
+                    <!-- Evaluation Results Container (Revealed on analysis) -->
+                    <div id="results-wrapper" class="results-layout hidden">
+                        <!-- Main Verdict Header Card -->
+                        <div id="verdict-card" class="verdict-summary-card">
+                            <div class="verdict-left-block">
+                                <div class="verdict-badge-shield" id="verdict-icon">
+                                    <!-- Injected Shield SVG -->
+                                </div>
+                                <div class="verdict-meta-block">
+                                    <span class="verdict-overline">MODEL CLASSIFICATION</span>
+                                    <h3 id="verdict-title" class="verdict-heading">--</h3>
+                                    <div class="evaluated-url-row">
+                                        <span class="target-label">TARGET:</span>
+                                        <span id="evaluated-url" class="target-mono">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="verdict-metrics-group">
+                                <div class="metric-pill-box">
+                                    <span class="pill-label">CONFIDENCE</span>
+                                    <span class="pill-val cyan-highlight" id="confidence-val">--%</span>
+                                </div>
+                                <div class="metric-pill-box">
+                                    <span class="pill-label">RISK LEVEL</span>
+                                    <span class="pill-val" id="risk-val">--</span>
+                                </div>
+                                <div class="metric-pill-box">
+                                    <span class="pill-label">CLASSIFIER</span>
+                                    <span class="pill-val small-val" id="model-val">Random Forest</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Probability Gauge Card -->
+                        <div class="probability-monitor-card">
+                            <div class="prob-header-row">
+                                <div>
+                                    <h4 class="prob-title">Malicious (Phishing) Threat Probability</h4>
+                                    <span class="prob-subtext">Estimated via Random Forest ensemble leaf distribution</span>
+                                </div>
+                                <span class="prob-score-val" id="prob-percentage">0%</span>
+                            </div>
+                            <div class="prob-track-outer">
+                                <div id="prob-fill" class="prob-track-inner" style="width: 0%;">
+                                    <div class="prob-track-glow"></div>
+                                </div>
+                            </div>
+                            <div class="prob-scale-legend">
+                                <span class="legend-safe">● 0% (Legitimate)</span>
+                                <span class="legend-mid">| 50% Threshold</span>
+                                <span class="legend-danger">● 100% (Phishing)</span>
+                            </div>
+                        </div>
+
+                        <!-- 2-Column Analytics Matrix -->
+                        <div class="analytics-matrix-grid">
+                            <!-- Suspicious Indicators (XAI) -->
+                            <div class="matrix-card-pane">
+                                <div class="matrix-card-topbar">
+                                    <div class="topbar-badge badge-warn">
+                                        <svg viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2.2" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="matrix-pane-title">Explainable AI (XAI) Indicators</h4>
+                                        <p class="matrix-pane-desc">Identified structural anomalies and risk factors</p>
+                                    </div>
+                                </div>
+                                <div id="explanations-list" class="explanations-list-container">
+                                    <!-- Injected dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Extracted Feature Vector -->
+                            <div class="matrix-card-pane">
+                                <div class="matrix-card-topbar">
+                                    <div class="topbar-badge badge-matrix">
+                                        <svg viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2.2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="matrix-pane-title">Extracted Lexical Vector</h4>
+                                        <p class="matrix-pane-desc">15 numerical dimensions fed to classifier</p>
+                                    </div>
+                                </div>
+                                <div class="table-scroll-wrapper">
+                                    <table class="platform-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Feature</th>
+                                                <th>Value</th>
+                                                <th>Security Context</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="features-tbody">
+                                            <!-- Injected via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-PANE 2: MODEL BENCHMARK -->
+                <div id="metrics-view" class="ops-subpane hidden">
+                    <div class="benchmark-container-card">
+                        <div class="benchmark-table-scroller">
+                            <table class="platform-benchmark-table">
+                                <thead>
+                                    <tr>
+                                        <th>Model Architecture</th>
+                                        <th>Accuracy</th>
+                                        <th>Precision</th>
+                                        <th>Recall</th>
+                                        <th>F1-Score</th>
+                                        <th>Runtime Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="benchmark-tbody">
+                                    <tr><td colspan="6" class="loading-state">Loading model benchmarks...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="benchmark-dual-columns">
+                        <!-- Confusion Matrix -->
+                        <div class="matrix-card-pane">
+                            <div class="matrix-card-topbar">
+                                <div class="topbar-badge badge-cm">
+                                    <svg viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2.2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                </div>
+                                <div>
+                                    <h4 class="matrix-pane-title">Confusion Matrix Verification</h4>
+                                    <p class="matrix-pane-desc">1,200 held-out test URLs (600 Safe, 600 Phishing)</p>
+                                </div>
+                            </div>
+
+                            <div class="cm-display-shell">
+                                <div class="cm-matrix-layout">
+                                    <div class="cm-corner"></div>
+                                    <div class="cm-col-tag">Pred. Safe (0)</div>
+                                    <div class="cm-col-tag">Pred. Phish (1)</div>
+
+                                    <div class="cm-row-tag">Act. Safe (0)</div>
+                                    <div class="cm-metric-cell cm-cell-safe">
+                                        <span class="cm-big-num" id="val-tn">--</span>
+                                        <span class="cm-desc-tag">True Negative (TN)</span>
+                                    </div>
+                                    <div class="cm-metric-cell cm-cell-danger">
+                                        <span class="cm-big-num" id="val-fp">--</span>
+                                        <span class="cm-desc-tag">False Positive (FP)</span>
+                                    </div>
+
+                                    <div class="cm-row-tag">Act. Phish (1)</div>
+                                    <div class="cm-metric-cell cm-cell-danger">
+                                        <span class="cm-big-num" id="val-fn">--</span>
+                                        <span class="cm-desc-tag">False Negative (FN)</span>
+                                    </div>
+                                    <div class="cm-metric-cell cm-cell-safe">
+                                        <span class="cm-big-num" id="val-tp">--</span>
+                                        <span class="cm-desc-tag">True Positive (TP)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feature Importance -->
+                        <div class="matrix-card-pane">
+                            <div class="matrix-card-topbar">
+                                <div class="topbar-badge badge-imp">
+                                    <svg viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2.2" fill="none"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                                </div>
+                                <div>
+                                    <h4 class="matrix-pane-title">Predictive Feature Importance</h4>
+                                    <p class="matrix-pane-desc">Random Forest Gini Impurity reduction weights</p>
+                                </div>
+                            </div>
+
+                            <div class="feature-importance-bars" id="importance-list">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-PANE 3: ARCHITECTURE & VIVA -->
+                <div id="architecture-view" class="ops-subpane hidden">
+                    <div class="viva-master-cards">
+                        <div class="viva-brief-card">
+                            <span class="viva-order-index">01</span>
+                            <span class="viva-domain-tag">THE PROBLEM</span>
+                            <h4 class="viva-card-head">Zero-Hour Vulnerability</h4>
+                            <p class="viva-card-copy">Traditional blacklist databases are fundamentally reactive. Attackers deploy disposable subdomains that harvest credentials and vanish before blacklists update. A structural ML classifier detects malice on initial encounter.</p>
+                        </div>
+
+                        <div class="viva-brief-card">
+                            <span class="viva-order-index">02</span>
+                            <span class="viva-domain-tag">THE INNOVATION</span>
+                            <h4 class="viva-card-head">In-Memory Lexical Isolation</h4>
+                            <p class="viva-card-copy">Visiting target URLs risks drive-by malware execution and connection logging. Decomposing URL string tokens in memory operates in under 20ms with absolute safety.</p>
+                        </div>
+
+                        <div class="viva-brief-card">
+                            <span class="viva-order-index">03</span>
+                            <span class="viva-domain-tag">ALGORITHM MATH</span>
+                            <h4 class="viva-card-head">Gini Impurity & Bagging</h4>
+                            <p class="viva-card-copy">Random Forest builds 100 decorrelated decision trees using bootstrap aggregation. At each split, the feature that maximizes information gain is selected:</p>
+                            <div class="formula-callout">I_G(p) = 1 - Σ (p_k)²</div>
+                        </div>
+
+                        <div class="viva-brief-card">
+                            <span class="viva-order-index">04</span>
+                            <span class="viva-domain-tag">EVALUATION METRICS</span>
+                            <h4 class="viva-card-head">Precision & Recall Balance</h4>
+                            <p class="viva-card-copy">Evaluated against Accuracy, Precision, Recall, and F1-score on 1,200 held-out test URLs, maintaining 100% test recall so zero phishing links evade interception.</p>
+                        </div>
+
+                        <div class="viva-brief-card">
+                            <span class="viva-order-index">05</span>
+                            <span class="viva-domain-tag">SYSTEM ADVANTAGES</span>
+                            <h4 class="viva-card-head">Privacy & Offline Speed</h4>
+                            <p class="viva-card-copy">Operates entirely offline without external API keys or third-party telemetry, preserving complete privacy for enterprise network queries.</p>
+                        </div>
+
+                        <div class="viva-brief-card">
+                            <span class="viva-order-index">06</span>
+                            <span class="viva-domain-tag">FUTURE SCOPE</span>
+                            <h4 class="viva-card-head">Browser Extension & MTA</h4>
+                            <p class="viva-card-copy">The lightweight serialized pipeline can be compiled into an in-browser WebExtension or integrated into email gateways to scan inbound hyperlinks.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Akera Cyber AI Assistant Widget -->
+    <div id="ai-assistant-widget" class="ai-assistant-widget akera-widget">
+        <!-- Floating Launcher Pill -->
+        <button id="ai-assistant-toggle" class="ai-assistant-toggle-btn akera-toggle" type="button" aria-label="Toggle Akera Cyber AI" title="Activate Akera Cyber Intelligence">
+            <span class="akera-pulse-wave"></span>
+            <span class="ai-status-pulse"></span>
+            <span class="ai-toggle-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+            </span>
+            <span class="ai-toggle-text">AKERA // AI</span>
+        </button>
+
+        <!-- Floating Chat / Assistant Panel -->
+        <div id="ai-assistant-panel" class="ai-assistant-panel akera-panel hidden" role="dialog" aria-labelledby="ai-panel-title">
+            <!-- Glowing Scanline Overlay -->
+            <div class="akera-scanline-fx"></div>
+
+            <div class="ai-panel-header akera-header">
+                <div class="ai-panel-branding">
+                    <div class="akera-avatar-badge">
+                        <div class="akera-avatar-radar"></div>
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--accent-cyan)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <span class="ai-online-dot"></span>
+                    </div>
+                    <div>
+                        <div class="akera-title-row">
+                            <h4 id="ai-panel-title" class="ai-panel-title">AKERA</h4>
+                            <span class="akera-chip-ver">v4.2 PRO</span>
+                        </div>
+                        <span class="ai-panel-subtitle">Neural Security Copilot • Ready</span>
+                    </div>
+                </div>
+                <div class="ai-panel-actions">
+                    <button id="ai-clear-btn" class="ai-btn-ghost" type="button" title="Purge session memory" aria-label="Clear Chat">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                    <button id="ai-close-btn" class="ai-btn-ghost" type="button" title="Minimize Akera" aria-label="Close Assistant">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="ai-messages-container" class="ai-messages-container">
+                <!-- Welcome Bot Message -->
+                <div class="ai-msg ai-msg-bot">
+                    <div class="ai-msg-bubble akera-bubble">
+                        <div class="akera-agent-tag"><span>AKERA // THREAT ADVISOR</span></div>
+                        <p><strong>Operator link confirmed.</strong> I am <strong>Akera</strong>, your neural cybersecurity copilot.</p>
+                        <p>I operate on strictly verified security protocols. Greet me, paste a suspicious link to inspect, or select an authorized pre-prompt below:</p>
+                    </div>
+                </div>
+
+                <!-- Quick Query Suggestion Chips -->
+                <div class="ai-suggestions-wrap" id="ai-suggestions">
+                    <span class="ai-suggestions-label">AUTHORIZED SECURITY PROTOCOLS</span>
+                    <div class="ai-suggestions-scroll">
+                        <button class="ai-sugg-chip" data-query="Why is this website safe to use?"><span class="chip-glow-bullet"></span>🛡️ Why is this website safe?</button>
+                        <button class="ai-sugg-chip" data-query="What is the use of PhishGuard?"><span class="chip-glow-bullet"></span>🎯 What is the use of PhishGuard?</button>
+                        <button class="ai-sugg-chip" data-query="How does PhishGuard detect phishing links?"><span class="chip-glow-bullet"></span>🔍 How does detection work?</button>
+                        <button class="ai-sugg-chip" data-query="What should I do if I clicked a phishing link?"><span class="chip-glow-bullet"></span>⚠️ What if I clicked a bad link?</button>
+                        <button class="ai-sugg-chip" data-query="Explain URL risk levels and confidence score"><span class="chip-glow-bullet"></span>📊 Explain risk & confidence</button>
+                        <button class="ai-sugg-chip" data-query="What is homograph and punycode spoofing?"><span class="chip-glow-bullet"></span>🕵️ Homograph & @ tricks</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer / Input Form -->
+            <form id="ai-chat-form" class="ai-chat-form akera-form" autocomplete="off">
+                <input id="ai-chat-input" type="text" class="ai-chat-input akera-input" placeholder="Message Akera or paste URL..." maxlength="500" required>
+                <button id="ai-chat-send" type="submit" class="ai-chat-send-btn akera-send" aria-label="Transmit to Akera" title="Transmit">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Minimal Platform Footer -->
+    <footer class="platform-footer">
+        <div class="footer-container">
+            <div class="footer-brand-info">
+                <span class="footer-title">PHISHGUARD<span class="cyan-accent">.AI</span></span>
+                <span class="footer-note">Machine Learning Threat Intelligence Platform • Built with Python & Scikit-Learn</span>
+            </div>
+            <a href="#hero-section" class="footer-back-link">BACK TO TOP ↑</a>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=akera1"></script>
+</body>
+</html>

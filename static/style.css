@@ -2158,7 +2158,7 @@ body.cyber-platform-body {
    COSMIC HERO CENTERPIECE (MATCHING CODEUNIVI UNIVERSE REFERENCE)
    -------------------------------------------------------------------------- */
 .hero-cosmic-center {
-    max-width: 900px;
+    max-width: 920px;
     margin: 0 auto;
     text-align: center;
     display: flex;
@@ -2166,7 +2166,9 @@ body.cyber-platform-body {
     align-items: center;
     position: relative;
     z-index: 5;
-    padding-top: 1.5rem;
+    padding: 2rem 1.5rem 1.5rem;
+    border-radius: 28px;
+    background: radial-gradient(ellipse at center, rgba(1, 2, 6, 0.45) 0%, rgba(1, 2, 6, 0.15) 60%, transparent 80%);
 }
 
 .hero-cosmic-title {
@@ -2177,7 +2179,7 @@ body.cyber-platform-body {
     letter-spacing: -0.025em;
     color: #ffffff;
     margin-bottom: 1.6rem;
-    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 4px 35px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 .hero-cosmic-title em {
@@ -2186,19 +2188,19 @@ body.cyber-platform-body {
     font-weight: 400;
     font-size: 1.08em;
     color: #ffffff;
-    text-shadow: 0 0 35px rgba(255, 255, 255, 0.85), 0 0 65px rgba(56, 189, 248, 0.5);
+    text-shadow: 0 0 35px rgba(255, 255, 255, 0.9), 0 0 65px rgba(56, 189, 248, 0.55), 0 4px 20px rgba(0, 0, 0, 0.9);
     background: none;
     -webkit-text-fill-color: initial;
 }
 
 .hero-cosmic-lead {
     font-size: 1.15rem;
-    color: rgba(240, 245, 255, 0.78);
-    max-width: 640px;
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 680px;
     margin: 0 auto 2.5rem;
     line-height: 1.75;
     font-weight: 400;
-    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.95), 0 1px 6px rgba(0, 0, 0, 0.9);
 }
 
 .hero-cosmic-actions {

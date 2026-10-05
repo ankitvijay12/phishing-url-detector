@@ -479,11 +479,11 @@ document.addEventListener("DOMContentLoaded", () => {
             diskGeo.setAttribute("color", new THREE.BufferAttribute(diskCol, 3));
 
             const diskMat = new THREE.PointsMaterial({
-                size: 0.30,
+                size: 0.22,
                 map: glowTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.96,
+                opacity: 0.92,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
@@ -528,11 +528,11 @@ document.addEventListener("DOMContentLoaded", () => {
             lensGeo.setAttribute("color", new THREE.BufferAttribute(lensCol, 3));
 
             const lensMat = new THREE.PointsMaterial({
-                size: 0.34,
+                size: 0.24,
                 map: glowTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.94,
+                opacity: 0.92,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
@@ -541,27 +541,30 @@ document.addEventListener("DOMContentLoaded", () => {
             blackHoleGroup.add(lensParticles);
 
             // ------------------------------------------------------------------
-            // 4B. COLOSSAL BIPOLAR RELATIVISTIC ASTROPHYSICAL JETS (REFERENCE ARTWORK)
+            // 4B. COLOSSAL BIPOLAR RELATIVISTIC ASTROPHYSICAL JETS (UNIFORM LAMINAR FLOW)
             // ------------------------------------------------------------------
             const jetCount = 20000;
             const jetGeo = new THREE.BufferGeometry();
             const jetPos = new Float32Array(jetCount * 3);
             const jetCol = new Float32Array(jetCount * 3);
-            const jetData = []; // Store y, direction, vy, radiusSpread, theta, baseColor
+            const jetData = []; // Store u, direction, speed, radialFrac, theta, baseColor
 
             for (let i = 0; i < jetCount; i++) {
                 const isNorth = i % 2 === 0;
                 const direction = isNorth ? 1.0 : -1.0;
 
-                // Height distribution: dense near pole nozzle, stretching up to 28 units
-                const heightFrac = Math.pow(Math.random(), 1.4);
-                const y = direction * (0.3 + heightFrac * 26.0);
+                // Uniform progressive height phase along the jet spine
+                const u = (i / jetCount);
+                const y = direction * (0.35 + Math.pow(u, 1.25) * 26.0);
                 const absY = Math.abs(y);
 
                 // Collimated nozzle flaring into conical plume
-                const coreRadius = 0.32 + 0.34 * Math.pow(absY, 0.72);
-                const radialSpread = coreRadius * (0.15 + Math.random() * 0.95);
-                const theta = Math.random() * Math.PI * 2;
+                const coreRadius = 0.28 + 0.32 * Math.pow(absY, 0.70);
+                const radialFrac = 0.15 + 0.85 * Math.sqrt((i % 250) / 250);
+                const radialSpread = coreRadius * radialFrac;
+
+                // Golden ratio angle dispersion for perfectly uniform circular density
+                const theta = (i * 2.399963229728653) % (Math.PI * 2);
 
                 const x = radialSpread * Math.cos(theta);
                 const z = radialSpread * Math.sin(theta);
@@ -570,36 +573,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 jetPos[i * 3 + 1] = y;
                 jetPos[i * 3 + 2] = z;
 
-                // Relativistic velocity: particles shoot outwards at high speed
-                const vy = direction * (3.2 + Math.random() * 4.6);
+                // Slow, uniform laminar flow speed
+                const speed = 0.045 + (i % 20) * 0.0016;
 
-                // Color gradient: Incandescent core white -> Diamond cyan-white -> Sparkling starlight
+                // Color gradient
                 let jr, jg, jb;
                 if (absY < 5.0) {
                     jr = 1.0; jg = 1.0; jb = 1.0;
                 } else if (absY < 15.0) {
                     jr = 0.92; jg = 0.97; jb = 1.0;
                 } else {
-                    const tint = Math.random();
-                    if (tint < 0.6) {
-                        jr = 0.88; jg = 0.95; jb = 1.0;
-                    } else {
-                        jr = 0.75; jg = 0.88; jb = 1.0;
-                    }
+                    jr = 0.85; jg = 0.94; jb = 1.0;
                 }
 
-                jetCol[i * 3] = jr;
-                jetCol[i * 3 + 1] = jg;
-                jetCol[i * 3 + 2] = jb;
+                // Initial soft sine fade
+                const fade = Math.sin(u * Math.PI);
+                jetCol[i * 3] = jr * fade;
+                jetCol[i * 3 + 1] = jg * fade;
+                jetCol[i * 3 + 2] = jb * fade;
 
                 jetData.push({
-                    y: y,
+                    u: u,
                     direction: direction,
-                    vy: vy,
-                    baseRadius: 0.32,
+                    speed: speed,
+                    radialFrac: radialFrac,
                     theta: theta,
-                    radialDist: radialSpread / Math.max(0.1, coreRadius),
-                    absMax: 27.5
+                    baseR: jr,
+                    baseG: jg,
+                    baseB: jb
                 });
             }
 
@@ -607,11 +608,11 @@ document.addEventListener("DOMContentLoaded", () => {
             jetGeo.setAttribute("color", new THREE.BufferAttribute(jetCol, 3));
 
             const jetMat = new THREE.PointsMaterial({
-                size: 0.34,
+                size: 0.22,
                 map: glowTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.95,
+                opacity: 0.88,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
@@ -853,27 +854,27 @@ document.addEventListener("DOMContentLoaded", () => {
             function updateBlackHolePosition() {
                 const w = window.innerWidth;
                 if (w >= 992) {
-                    blackHoleGroup.position.set(0, 1.4, 0);
-                    blackHoleGroup.scale.set(1.0, 1.0, 1.0);
+                    blackHoleGroup.position.set(0, 0.45, -1.2);
+                    blackHoleGroup.scale.set(0.92, 0.92, 0.92);
                 } else if (w >= 640) {
-                    blackHoleGroup.position.set(0, 0.8, -2);
-                    blackHoleGroup.scale.set(0.78, 0.78, 0.78);
+                    blackHoleGroup.position.set(0, 0.25, -2.2);
+                    blackHoleGroup.scale.set(0.74, 0.74, 0.74);
                 } else {
-                    blackHoleGroup.position.set(0, 0.4, -4);
-                    blackHoleGroup.scale.set(0.62, 0.62, 0.62);
+                    blackHoleGroup.position.set(0, 0.1, -4.0);
+                    blackHoleGroup.scale.set(0.58, 0.58, 0.58);
                 }
             }
             updateBlackHolePosition();
 
-            // MOUSE GRAVITATIONAL PARALLAX
+            // MOUSE GRAVITATIONAL PARALLAX (Subtle, smooth damping)
             let targetRotX = 0.22;
             let targetRotY = 0.0;
 
             window.addEventListener("mousemove", (e) => {
                 const normX = (e.clientX / window.innerWidth) * 2 - 1;
                 const normY = -(e.clientY / window.innerHeight) * 2 + 1;
-                targetRotX = 0.22 - normY * 0.18;
-                targetRotY = normX * 0.25;
+                targetRotX = 0.22 - normY * 0.12;
+                targetRotY = normX * 0.18;
             }, { passive: true });
 
             // SCROLL PROGRESSION
@@ -888,11 +889,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             setTurbineScanning = function(isScanning) {
                 if (isScanning) {
-                    scanSpeedMultiplier = 3.6;
-                    targetCoreIntensity = 10.0;
-                    photonLight.intensity = 8.5;
-                    jetLightNorth.intensity = 7.5;
-                    jetLightSouth.intensity = 7.5;
+                    scanSpeedMultiplier = 2.4;
+                    targetCoreIntensity = 9.0;
+                    photonLight.intensity = 7.5;
+                    jetLightNorth.intensity = 6.5;
+                    jetLightSouth.intensity = 6.5;
                 } else {
                     scanSpeedMultiplier = 1.0;
                     targetCoreIntensity = 5.5;
@@ -914,7 +915,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             // ------------------------------------------------------------------
-            // RENDER LOOP (60 FPS KEPLERIAN DYNAMICS & POLAR JETS)
+            // RENDER LOOP (SLOW, SILKY-SMOOTH KEPLERIAN DYNAMICS & UNIFORM JETS)
             // ------------------------------------------------------------------
             let clock = new THREE.Clock();
 
@@ -923,13 +924,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 const delta = clock.getDelta();
                 const elapsedTime = clock.getElapsedTime();
 
-                // 1. Orbital dynamics of the Primary Accretion Disk
+                // 1. Orbital dynamics of the Primary Accretion Disk (Slow, smooth celestial rotation)
                 const dPos = diskGeo.attributes.position.array;
                 const dCol = diskGeo.attributes.color.array;
 
                 for (let i = 0; i < diskCount; i++) {
                     const item = diskData[i];
-                    item.theta += item.speed * delta * 2.8 * scanSpeedMultiplier;
+                    item.theta += item.speed * delta * 0.65 * scanSpeedMultiplier;
 
                     const x = item.r * Math.cos(item.theta);
                     const z = item.r * Math.sin(item.theta);
@@ -937,7 +938,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     dPos[i * 3] = x;
                     dPos[i * 3 + 2] = z;
 
-                    const dopplerFactor = 1.0 - (x / item.r) * 0.38;
+                    const dopplerFactor = 1.0 - (x / item.r) * 0.32;
                     dCol[i * 3] = Math.min(1.0, item.baseR * dopplerFactor);
                     dCol[i * 3 + 1] = Math.min(1.0, item.baseG * dopplerFactor);
                     dCol[i * 3 + 2] = Math.min(1.0, item.baseB * dopplerFactor);
@@ -945,11 +946,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 diskGeo.attributes.position.needsUpdate = true;
                 diskGeo.attributes.color.needsUpdate = true;
 
-                // 2. Orbital dynamics of the Lensing Halos (Einstein Ring)
+                // 2. Orbital dynamics of the Lensing Halos (Einstein Ring - slow & smooth)
                 const lPos = lensGeo.attributes.position.array;
                 for (let i = 0; i < lensCount; i++) {
                     const item = lensData[i];
-                    item.angle += item.speed * delta * 2.6 * scanSpeedMultiplier;
+                    item.angle += item.speed * delta * 0.58 * scanSpeedMultiplier;
                     const x = item.r * Math.cos(item.angle);
                     const lift = Math.sqrt(Math.max(0, item.r * item.r - x * x)) * 0.96 + 0.35;
                     const y = (item.isUpper ? 1 : -0.7) * lift;
@@ -959,44 +960,51 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 lensGeo.attributes.position.needsUpdate = true;
 
-                // 2B. Colossal Relativistic Astrophysical Polar Jets Dynamic Flow
+                // 2B. Colossal Relativistic Astrophysical Polar Jets: UNIFORM & SILKY-SMOOTH LAMINAR FLOW
                 const jPos = jetGeo.attributes.position.array;
-                const jetSpeedBoost = scanSpeedMultiplier * 1.35;
+                const jCol = jetGeo.attributes.color.array;
 
                 for (let i = 0; i < jetCount; i++) {
                     const item = jetData[i];
-                    item.y += item.vy * delta * jetSpeedBoost;
+                    // Progress height phase uniformly
+                    item.u += item.speed * delta * 0.85 * scanSpeedMultiplier;
+                    if (item.u >= 1.0) item.u -= 1.0;
 
-                    // When particle shoots past jet boundary, loop back to the nozzle
-                    if (Math.abs(item.y) > item.absMax) {
-                        item.y = item.direction * (0.25 + Math.random() * 0.7);
-                        item.theta = Math.random() * Math.PI * 2;
-                    }
+                    // Height curve: smooth laminar expansion
+                    const y = item.direction * (0.35 + Math.pow(item.u, 1.25) * 26.0);
+                    const absY = Math.abs(y);
 
-                    const absY = Math.abs(item.y);
-                    const coreRadius = 0.32 + 0.34 * Math.pow(absY, 0.72);
-                    const currentRadius = coreRadius * item.radialDist;
+                    // Smooth radial boundary
+                    const coreRadius = 0.28 + 0.32 * Math.pow(absY, 0.70);
+                    const currentRadius = coreRadius * item.radialFrac;
 
-                    // Relativistic helical synchrotron swirl along the vertical axis
-                    const swirlAngle = item.theta + item.y * 0.16 + elapsedTime * 1.4 * item.direction;
+                    // Slow, smooth helical swirl
+                    const swirlAngle = item.theta + y * 0.08 + elapsedTime * 0.25 * item.direction;
                     jPos[i * 3] = currentRadius * Math.cos(swirlAngle);
-                    jPos[i * 3 + 1] = item.y;
+                    jPos[i * 3 + 1] = y;
                     jPos[i * 3 + 2] = currentRadius * Math.sin(swirlAngle);
+
+                    // Smooth alpha fade: 0 at nozzle -> 1.0 in plume -> 0 at boundary (ZERO POPPING!)
+                    const fade = Math.sin(item.u * Math.PI);
+                    jCol[i * 3] = item.baseR * fade;
+                    jCol[i * 3 + 1] = item.baseG * fade;
+                    jCol[i * 3 + 2] = item.baseB * fade;
                 }
                 jetGeo.attributes.position.needsUpdate = true;
+                jetGeo.attributes.color.needsUpdate = true;
 
-                // 3. Photon Ring Pulsar Breathing
-                photonRingMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 2.4) * 0.015);
-                photonHaloMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 1.8 + 1.0) * 0.025);
+                // 3. Photon Ring Pulsar Breathing (Slow, deep celestial breathing)
+                photonRingMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 0.8) * 0.012);
+                photonHaloMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 0.6 + 1.0) * 0.018);
 
-                // Code Waterfall Texture Scroll (Data Plunging into Singularity)
-                codeTextureObj.texture.offset.y -= 0.007 * scanSpeedMultiplier;
+                // Code Waterfall Texture Scroll (Smooth, slow hypnotic drift)
+                codeTextureObj.texture.offset.y -= 0.0018 * scanSpeedMultiplier;
 
-                // Animate Ingestion Stream Particles
+                // Animate Ingestion Stream Particles (Smooth gliding flow)
                 const sPos = streamGeo.attributes.position.array;
                 for (let i = 0; i < streamCount; i++) {
                     const item = streamData[i];
-                    item.p += item.speed * scanSpeedMultiplier;
+                    item.p += item.speed * 0.35 * scanSpeedMultiplier;
                     if (item.p > 1.0) item.p = 0.0;
 
                     const t = item.p;
@@ -1006,9 +1014,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const cz = -9.0 * (1 - t) + 1.2 * t + Math.cos(t * Math.PI) * 1.8;
 
                     // Add lateral turbulence
-                    sPos[i * 3] = cx + Math.sin(elapsedTime * 3.0 + i) * 0.35 + item.offsetRadius * (1 - t * 0.7);
-                    sPos[i * 3 + 1] = cy + Math.cos(elapsedTime * 2.5 + i) * 0.25;
-                    sPos[i * 3 + 2] = cz + (Math.random() - 0.5) * 0.2;
+                    sPos[i * 3] = cx + Math.sin(elapsedTime * 1.2 + i) * 0.25 + item.offsetRadius * (1 - t * 0.7);
+                    sPos[i * 3 + 1] = cy + Math.cos(elapsedTime * 1.0 + i) * 0.18;
+                    sPos[i * 3 + 2] = cz;
                 }
                 streamGeo.attributes.position.needsUpdate = true;
 

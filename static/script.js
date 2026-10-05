@@ -73,6 +73,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (e) {}
             },
 
+            // Creation of Adam contact spark chime: high-energy harmonic resonance
+            playContactChime() {
+                if (isMuted) return;
+                const ac = getContext();
+                if (!ac) return;
+                try {
+                    const now = ac.currentTime;
+                    // Celestial harmonic chord: 528Hz (Creation tone), 792Hz, 1056Hz, 1584Hz
+                    const chord = [528, 792, 1056, 1584];
+                    chord.forEach((freq, idx) => {
+                        const osc = ac.createOscillator();
+                        const gain = ac.createGain();
+                        osc.type = idx === 0 ? "sine" : "triangle";
+                        osc.frequency.setValueAtTime(freq, now);
+                        osc.frequency.exponentialRampToValueAtTime(freq * 1.015, now + 1.2);
+
+                        const maxGain = 0.09 / (idx + 1);
+                        gain.gain.setValueAtTime(0.001, now);
+                        gain.gain.linearRampToValueAtTime(maxGain, now + 0.06);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+
+                        osc.connect(gain);
+                        gain.connect(ac.destination);
+                        osc.start(now);
+                        osc.stop(now + 1.55);
+                    });
+                } catch (e) {}
+            },
+
             // High-tech scan energy pulse when scanning starts
             playScanEnergy() {
                 if (isMuted) return;
@@ -2156,8 +2185,166 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --------------------------------------------------------------------------
+    // CREATION OF ADAM TWO HANDS CINEMATIC INTRO CONTROLLER
+    // --------------------------------------------------------------------------
+    function initHandIntro() {
+        const overlay = document.getElementById("intro-hand-overlay");
+        if (!overlay) return;
+
+        const handLeft = document.getElementById("intro-hand-left");
+        const handRight = document.getElementById("intro-hand-right");
+        const contactPoint = document.getElementById("intro-contact-point");
+        const skipBtn = document.getElementById("intro-skip-btn");
+
+        let isFinished = false;
+        let contactTimer = null;
+        let revealTimer = null;
+        let cleanupTimer = null;
+
+        function triggerContactEvent() {
+            if (contactPoint) contactPoint.classList.add("triggered");
+            if (handLeft) handLeft.classList.add("contact-glow");
+            if (handRight) handRight.classList.add("contact-glow");
+            CyberAudio.unlock();
+            CyberAudio.playContactChime();
+        }
+
+        function finishIntro(fast = false) {
+            if (isFinished) return;
+            isFinished = true;
+
+            clearTimeout(contactTimer);
+            clearTimeout(revealTimer);
+            clearTimeout(cleanupTimer);
+
+            if (fast) {
+                // If user clicked or skipped, ensure contact spark triggers immediately
+                triggerContactEvent();
+                setTimeout(() => {
+                    overlay.classList.add("revealing");
+                    cleanupTimer = setTimeout(() => {
+                        overlay.classList.add("hidden-finished");
+                    }, 850);
+                }, 180);
+            } else {
+                overlay.classList.add("revealing");
+                cleanupTimer = setTimeout(() => {
+                    overlay.classList.add("hidden-finished");
+                }, 850);
+            }
+        }
+
+        // Automatic choreographed sequence:
+        // Hands glide inward over 2.1s
+        // Direct fingertip contact at ~2.05s
+        contactTimer = setTimeout(() => {
+            triggerContactEvent();
+        }, 2050);
+
+        // Smooth reveal of website at 2.45s
+        revealTimer = setTimeout(() => {
+            finishIntro(false);
+        }, 2450);
+
+        // Allow instant reveal on clicking anywhere on overlay
+        overlay.addEventListener("click", (e) => {
+            if (e.target.closest("#intro-skip-btn")) return;
+            finishIntro(true);
+        });
+
+        // Skip button handler
+        if (skipBtn) {
+            skipBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                finishIntro(true);
+            });
+        }
+
+        // Keyboard navigation skip (Escape, Space, Enter)
+        window.addEventListener("keydown", (e) => {
+            if (!isFinished && (e.key === "Escape" || e.key === " " || e.key === "Enter")) {
+                finishIntro(true);
+            }
+        });
+    }
+
+    // --------------------------------------------------------------------------
+    // CLIPBOARD PASTE CONTROLS (LIGHT SPACE BLUE LINK / PASTE ACTIONS)
+    // --------------------------------------------------------------------------
+    function initClipboardPasteControls() {
+        const btnPasteUrl = document.getElementById("btn-paste-url");
+        const urlInput = document.getElementById("url-input");
+        const aiPasteBtn = document.getElementById("ai-paste-btn");
+        const aiChatInput = document.getElementById("ai-chat-input");
+
+        if (btnPasteUrl && urlInput) {
+            btnPasteUrl.addEventListener("click", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                CyberAudio.unlock();
+                CyberAudio.playClick(1050);
+
+                let pastedText = "";
+                try {
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        pastedText = await navigator.clipboard.readText();
+                    }
+                } catch (err) {
+                    console.warn("Clipboard access denied or unavailable:", err);
+                }
+
+                if (pastedText && pastedText.trim()) {
+                    urlInput.value = pastedText.trim();
+                    btnPasteUrl.classList.add("pasted-flash");
+                    const label = btnPasteUrl.querySelector(".paste-label");
+                    if (label) label.textContent = "PASTED!";
+                    setTimeout(() => {
+                        btnPasteUrl.classList.remove("pasted-flash");
+                        if (label) label.textContent = "PASTE";
+                    }, 1400);
+                    urlInput.focus();
+                } else {
+                    urlInput.focus();
+                    urlInput.setAttribute("placeholder", "Paste URL directly here (Cmd+V / Ctrl+V)...");
+                }
+            });
+        }
+
+        if (aiPasteBtn && aiChatInput) {
+            aiPasteBtn.addEventListener("click", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                CyberAudio.unlock();
+                CyberAudio.playClick(950);
+
+                try {
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        const text = await navigator.clipboard.readText();
+                        if (text && text.trim()) {
+                            aiChatInput.value = (aiChatInput.value ? aiChatInput.value + " " : "") + text.trim();
+                            aiChatInput.focus();
+                            aiPasteBtn.style.color = "#10b981";
+                            setTimeout(() => {
+                                aiPasteBtn.style.color = "";
+                            }, 1000);
+                        } else {
+                            aiChatInput.focus();
+                        }
+                    } else {
+                        aiChatInput.focus();
+                    }
+                } catch (err) {
+                    aiChatInput.focus();
+                }
+            });
+        }
+    }
+
     initThreeBackground();
     loadSamples();
     fetchModelMetrics();
     initAiAssistant();
+    initHandIntro();
+    initClipboardPasteControls();
 });

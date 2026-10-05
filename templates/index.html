@@ -14,9 +14,54 @@
     <!-- Three.js WebGL Engine for 3D Background & Mechanical Turbine Spiral -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-    <link rel="stylesheet" href="static/style.css?v=silverjet2">
+    <link rel="stylesheet" href="static/style.css?v=hands1">
 </head>
 <body class="cyber-platform-body">
+    <!-- ====================================================================
+         CREATION OF ADAM: TWO HANDS LIQUID CHROME CINEMATIC INTRO
+         ==================================================================== -->
+    <div id="intro-hand-overlay" class="intro-hand-overlay">
+        <div class="intro-backdrop"></div>
+        <div class="intro-stardust"></div>
+
+        <div class="intro-stage" id="intro-stage">
+            <!-- Left Liquid Chrome Hand (Adam) -->
+            <div class="hand-wrapper hand-left-wrapper" id="intro-hand-left">
+                <img src="static/images/hand_left.png" alt="Liquid Chrome Left Hand" class="hand-img hand-left-img" draggable="false" />
+            </div>
+
+            <!-- Central Contact Flare & Shockwave Horizon -->
+            <div class="intro-contact-point" id="intro-contact-point">
+                <div class="contact-core-spark"></div>
+                <div class="contact-rays-spark"></div>
+                <div class="contact-wave-ring ring-1"></div>
+                <div class="contact-wave-ring ring-2"></div>
+                <div class="contact-ambient-glow"></div>
+            </div>
+
+            <!-- Right Liquid Chrome Hand (Divine/AI Matrix) -->
+            <div class="hand-wrapper hand-right-wrapper" id="intro-hand-right">
+                <img src="static/images/hand_right.png" alt="Liquid Chrome Right Hand" class="hand-img hand-right-img" draggable="false" />
+            </div>
+        </div>
+
+        <!-- Cinematic Telemetry Subtitle -->
+        <div class="intro-footer-hud" id="intro-hud">
+            <div class="intro-hud-tag">
+                <span class="hud-blink-dot"></span>
+                <span>NEURAL DEFENSE MATRIX // CREATION EVENT</span>
+            </div>
+            <p class="intro-hud-prompt">SYNCHRONIZING OPERATOR & HYPERLINK SINGULARITY</p>
+        </div>
+
+        <!-- Skip Control -->
+        <button id="intro-skip-btn" class="intro-skip-btn" type="button" aria-label="Skip Introduction">
+            <span class="skip-text">SKIP INTRO</span>
+            <span class="skip-key">[ESC]</span>
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+        </button>
+    </div>
+
     <!-- Top Scroll Progress Indicator -->
     <div id="scroll-progress" class="scroll-progress-line"></div>
 
@@ -353,10 +398,10 @@
                     <div class="scanner-input-card">
                         <form id="url-form" class="url-input-form">
                             <div class="input-shell">
-                                <div class="input-lead-icon">
-                                    <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2" fill="none">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                <div class="input-lead-icon" title="Hyperlink Target">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                                     </svg>
                                 </div>
                                 <input 
@@ -368,6 +413,13 @@
                                     spellcheck="false" 
                                     required 
                                 />
+                                <button type="button" id="btn-paste-url" class="btn-paste-url" title="Click to paste URL from clipboard" aria-label="Paste URL">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                                    </svg>
+                                    <span class="paste-label">PASTE</span>
+                                </button>
                                 <button type="submit" id="scan-btn" class="btn-execute-scan">
                                     <span class="btn-text">CHECK URL</span>
                                     <div class="scan-loading-spinner hidden" id="scan-spinner"></div>
@@ -408,6 +460,9 @@
                                     <h3 id="verdict-title" class="verdict-heading">--</h3>
                                     <div class="evaluated-url-row">
                                         <span class="target-label">TARGET:</span>
+                                        <span class="target-url-icon" title="Evaluated URL Target">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                        </span>
                                         <span id="evaluated-url" class="target-mono">--</span>
                                     </div>
                                 </div>
@@ -709,6 +764,12 @@
             <!-- Footer / Input Form -->
             <form id="ai-chat-form" class="ai-chat-form akera-form" autocomplete="off">
                 <input id="ai-chat-input" type="text" class="ai-chat-input akera-input" placeholder="Message Akera or paste URL..." maxlength="500" required>
+                <button type="button" id="ai-paste-btn" class="ai-paste-btn" title="Paste URL" aria-label="Paste URL into chat">
+                    <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                </button>
                 <button id="ai-chat-send" type="submit" class="ai-chat-send-btn akera-send" aria-label="Transmit to Akera" title="Transmit">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -730,6 +791,6 @@
         </div>
     </footer>
 
-    <script src="static/script.js?v=silverjet2"></script>
+    <script src="static/script.js?v=hands1"></script>
 </body>
 </html>

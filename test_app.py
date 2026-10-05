@@ -111,6 +111,27 @@ class TestPhishingDetector(unittest.TestCase):
         res = self.client.post("/api/predict", data=json.dumps({"url": "http://evil site.com"}), content_type="application/json")
         self.assertEqual(res.status_code, 400)
 
+    def test_intro_assets_and_markup(self):
+        """Verify Two Hands intro overlay and space-blue paste controls exist."""
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"intro-hand-overlay", res.data)
+        self.assertIn(b"intro-hand-left", res.data)
+        self.assertIn(b"intro-hand-right", res.data)
+        self.assertIn(b"intro-contact-point", res.data)
+        self.assertIn(b"btn-paste-url", res.data)
+
+        # Verify static hand image assets are served
+        left_res = self.client.get("/static/images/hand_left.png")
+        self.assertEqual(left_res.status_code, 200)
+        self.assertGreater(len(left_res.data), 100000)
+        left_res.close()
+
+        right_res = self.client.get("/static/images/hand_right.png")
+        self.assertEqual(right_res.status_code, 200)
+        self.assertGreater(len(right_res.data), 100000)
+        right_res.close()
+
 
 if __name__ == "__main__":
     unittest.main()

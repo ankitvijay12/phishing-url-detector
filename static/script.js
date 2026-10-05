@@ -313,26 +313,35 @@ document.addEventListener("DOMContentLoaded", () => {
             const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 2.2, 24);
 
-            // Subtle Deep Space Ambient Illumination
-            const ambientLight = new THREE.AmbientLight(0x180d28, 1.8);
+            // Subtle Deep Space Ambient Illumination (Midnight Void)
+            const ambientLight = new THREE.AmbientLight(0x060913, 2.2);
             scene.add(ambientLight);
 
-            // Core Singularity & Accretion Glow Light (Solar Amber/Gold)
-            const coreLight = new THREE.PointLight(0xffa726, 4.5, 50);
+            // Core Singularity & Accretion Glow Light (Incandescent Diamond White)
+            const coreLight = new THREE.PointLight(0xffffff, 5.5, 60);
             coreLight.position.set(0, 0, 0);
             scene.add(coreLight);
 
-            // Hot Photon Flash PointLight (White-Gold)
-            const photonLight = new THREE.PointLight(0xfff8e7, 3.2, 30);
+            // Hot Photon Flash PointLight (Electric Cyan-White)
+            const photonLight = new THREE.PointLight(0x7dd3fc, 4.2, 45);
             photonLight.position.set(0, 0, 0);
             scene.add(photonLight);
+
+            // Bipolar Relativistic Jet Column Spotlights (North & South)
+            const jetLightNorth = new THREE.PointLight(0xffffff, 3.8, 35);
+            jetLightNorth.position.set(0, 5.0, 0);
+            scene.add(jetLightNorth);
+
+            const jetLightSouth = new THREE.PointLight(0xffffff, 3.8, 35);
+            jetLightSouth.position.set(0, -5.0, 0);
+            scene.add(jetLightSouth);
 
             // Master Black Hole Transformation Hierarchy
             const blackHoleGroup = new THREE.Group();
             scene.add(blackHoleGroup);
 
             // ------------------------------------------------------------------
-            // TEXTURE GENERATOR: Soft Glowing Accretion Embers & Stars
+            // TEXTURE GENERATOR: Incandescent Diamond & Crystalline Stars
             // ------------------------------------------------------------------
             function createGlowDiscTexture() {
                 const canvas = document.createElement("canvas");
@@ -341,9 +350,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const ctx = canvas.getContext("2d");
                 const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
                 grad.addColorStop(0, "rgba(255, 255, 255, 1.0)");
-                grad.addColorStop(0.2, "rgba(255, 220, 140, 0.95)");
-                grad.addColorStop(0.5, "rgba(255, 130, 35, 0.45)");
-                grad.addColorStop(0.8, "rgba(220, 50, 15, 0.15)");
+                grad.addColorStop(0.22, "rgba(240, 249, 255, 0.95)");
+                grad.addColorStop(0.52, "rgba(186, 230, 253, 0.50)");
+                grad.addColorStop(0.82, "rgba(56, 189, 248, 0.15)");
                 grad.addColorStop(1.0, "rgba(0, 0, 0, 0)");
                 ctx.fillStyle = grad;
                 ctx.fillRect(0, 0, 64, 64);
@@ -357,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const ctx = canvas.getContext("2d");
                 const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
                 grad.addColorStop(0, "rgba(255, 255, 255, 1.0)");
-                grad.addColorStop(0.3, "rgba(220, 235, 255, 0.7)");
+                grad.addColorStop(0.3, "rgba(224, 242, 254, 0.85)");
                 grad.addColorStop(1.0, "rgba(0, 0, 0, 0)");
                 ctx.fillStyle = grad;
                 ctx.fillRect(0, 0, 32, 32);
@@ -368,7 +377,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const starTexture = createStarTexture();
 
             // ------------------------------------------------------------------
-            // 1. EVENT HORIZON: Pure Black Shadow Sphere
+            // 1. EVENT HORIZON: Pure Black Shadow Sphere (Singularity Core)
             // ------------------------------------------------------------------
             const horizonRadius = 3.35;
             const horizonGeo = new THREE.SphereGeometry(horizonRadius, 64, 64);
@@ -379,27 +388,27 @@ document.addEventListener("DOMContentLoaded", () => {
             blackHoleGroup.add(horizonMesh);
 
             // ------------------------------------------------------------------
-            // 2. PHOTON SPHERE: Razor-Thin White-Hot Lensing Boundary Ring
+            // 2. PHOTON SPHERE: Razor-Sharp Incandescent Diamond-White Einstein Rings
             // ------------------------------------------------------------------
             const photonRingGeo = new THREE.RingGeometry(horizonRadius + 0.04, horizonRadius + 0.38, 96);
             const photonRingMat = new THREE.MeshBasicMaterial({
-                color: 0xfff6d4,
+                color: 0xffffff,
                 side: THREE.DoubleSide,
                 transparent: true,
-                opacity: 0.95,
+                opacity: 0.98,
                 blending: THREE.AdditiveBlending
             });
             const photonRingMesh = new THREE.Mesh(photonRingGeo, photonRingMat);
             photonRingMesh.rotation.x = Math.PI / 2;
             blackHoleGroup.add(photonRingMesh);
 
-            // Secondary outer photon halo ring
-            const photonHaloGeo = new THREE.RingGeometry(horizonRadius + 0.02, horizonRadius + 0.75, 96);
+            // Secondary outer photon halo ring (Electric Cyan-White)
+            const photonHaloGeo = new THREE.RingGeometry(horizonRadius + 0.02, horizonRadius + 0.85, 96);
             const photonHaloMat = new THREE.MeshBasicMaterial({
-                color: 0xffa726,
+                color: 0x7dd3fc,
                 side: THREE.DoubleSide,
                 transparent: true,
-                opacity: 0.55,
+                opacity: 0.72,
                 blending: THREE.AdditiveBlending
             });
             const photonHaloMesh = new THREE.Mesh(photonHaloGeo, photonHaloMat);
@@ -407,28 +416,28 @@ document.addEventListener("DOMContentLoaded", () => {
             blackHoleGroup.add(photonHaloMesh);
 
             // ------------------------------------------------------------------
-            // 3. PRIMARY ACCRETION DISK (Keplerian Relativistic Particle Cloud)
+            // 3. PRIMARY ACCRETION DISK (Silver-White & Platinum Relativistic Disk)
             // ------------------------------------------------------------------
-            const diskCount = 28000;
+            const diskCount = 32000;
             const diskGeo = new THREE.BufferGeometry();
             const diskPos = new Float32Array(diskCount * 3);
             const diskCol = new Float32Array(diskCount * 3);
             const diskData = []; // Store radius, theta, speed, Doppler offset
 
             const rMin = horizonRadius + 0.5;
-            const rMax = 15.5;
+            const rMax = 16.5;
 
             for (let i = 0; i < diskCount; i++) {
                 // Non-linear radial distribution (denser toward the event horizon)
                 const u = Math.random();
-                const r = rMin + (rMax - rMin) * Math.pow(u, 1.8);
+                const r = rMin + (rMax - rMin) * Math.pow(u, 1.7);
                 const theta = Math.random() * Math.PI * 2;
 
                 // Keplerian velocity: inner particles orbit much faster than outer
-                const speed = (0.55 / Math.pow(r, 0.75)) * (0.88 + Math.random() * 0.24);
+                const speed = (0.58 / Math.pow(r, 0.75)) * (0.88 + Math.random() * 0.24);
 
                 // Vertical thickness flares with distance
-                const ySpread = (Math.random() - 0.5) * 0.28 * Math.pow((r - rMin) / (rMax - rMin), 1.2);
+                const ySpread = (Math.random() - 0.5) * 0.26 * Math.pow((r - rMin) / (rMax - rMin), 1.2);
 
                 const x = r * Math.cos(theta);
                 const z = r * Math.sin(theta);
@@ -437,23 +446,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 diskPos[i * 3 + 1] = ySpread;
                 diskPos[i * 3 + 2] = z;
 
-                // Color gradient: White-Hot Golden Core -> Fiery Solar Amber -> Deep Cosmic Crimson
+                // Color gradient: Incandescent White Core -> Liquid Silver/Platinum -> Faint Red/Amber Cosmic Dust
                 const t = (r - rMin) / (rMax - rMin);
                 let cr, cg, cb;
-                if (t < 0.18) {
+                if (t < 0.25) {
+                    // Blinding incandescent white core
                     cr = 1.0;
-                    cg = 0.95 - t * 0.8;
-                    cb = 0.82 - t * 2.5;
-                } else if (t < 0.55) {
-                    const k = (t - 0.18) / 0.37;
-                    cr = 1.0;
-                    cg = 0.80 - k * 0.45;
-                    cb = 0.18 - k * 0.12;
+                    cg = 1.0;
+                    cb = 1.0;
+                } else if (t < 0.68) {
+                    // Liquid silver and platinum ice
+                    const k = (t - 0.25) / 0.43;
+                    cr = 0.92 - k * 0.08;
+                    cg = 0.95 - k * 0.05;
+                    cb = 1.0;
                 } else {
-                    const k = (t - 0.55) / 0.45;
-                    cr = 1.0 - k * 0.48;
-                    cg = 0.35 - k * 0.28;
-                    cb = 0.08 + k * 0.08;
+                    // Outer faint reddish/amber cosmic nebular dust (matching reference artwork)
+                    const k = (t - 0.68) / 0.32;
+                    cr = 0.85 + k * 0.12;
+                    cg = 0.45 - k * 0.18;
+                    cb = 0.25 - k * 0.12;
                 }
 
                 diskCol[i * 3] = Math.max(0, Math.min(1, cr));
@@ -467,11 +479,11 @@ document.addEventListener("DOMContentLoaded", () => {
             diskGeo.setAttribute("color", new THREE.BufferAttribute(diskCol, 3));
 
             const diskMat = new THREE.PointsMaterial({
-                size: 0.32,
+                size: 0.30,
                 map: glowTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.95,
+                opacity: 0.96,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
@@ -480,9 +492,9 @@ document.addEventListener("DOMContentLoaded", () => {
             blackHoleGroup.add(diskParticles);
 
             // ------------------------------------------------------------------
-            // 4. GRAVITATIONAL LENSING ARCS: Iconic Gargantua Upper & Lower Einstein Halos
+            // 4. GRAVITATIONAL LENSING ARCS: Silver-White Gargantua Einstein Halos
             // ------------------------------------------------------------------
-            const lensCount = 10000;
+            const lensCount = 14000;
             const lensGeo = new THREE.BufferGeometry();
             const lensPos = new Float32Array(lensCount * 3);
             const lensCol = new Float32Array(lensCount * 3);
@@ -491,13 +503,13 @@ document.addEventListener("DOMContentLoaded", () => {
             for (let i = 0; i < lensCount; i++) {
                 const isUpper = i % 2 === 0;
                 const u = Math.random();
-                const r = rMin + (rMax * 0.65 - rMin) * Math.pow(u, 1.4);
+                const r = rMin + (rMax * 0.65 - rMin) * Math.pow(u, 1.35);
                 const angle = Math.random() * Math.PI;
-                const speed = (0.55 / Math.pow(r, 0.75)) * (0.9 + Math.random() * 0.2);
+                const speed = (0.58 / Math.pow(r, 0.75)) * (0.9 + Math.random() * 0.2);
 
                 const x = r * Math.cos(angle);
                 const arcLift = Math.sqrt(Math.max(0, r * r - x * x)) * 0.96 + 0.35;
-                const y = (isUpper ? 1 : -0.7) * arcLift + (Math.random() - 0.5) * 0.3;
+                const y = (isUpper ? 1 : -0.7) * arcLift + (Math.random() - 0.5) * 0.28;
                 const z = -0.4 - (r - rMin) * 0.22;
 
                 lensPos[i * 3] = x;
@@ -506,8 +518,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const t = (r - rMin) / (rMax * 0.65 - rMin);
                 lensCol[i * 3] = 1.0;
-                lensCol[i * 3 + 1] = Math.max(0, 0.92 - t * 0.5);
-                lensCol[i * 3 + 2] = Math.max(0, 0.70 - t * 0.6);
+                lensCol[i * 3 + 1] = Math.max(0.85, 1.0 - t * 0.15);
+                lensCol[i * 3 + 2] = Math.max(0.92, 1.0 - t * 0.08);
 
                 lensData.push({ r, angle, speed, isUpper, baseLift: arcLift });
             }
@@ -516,11 +528,11 @@ document.addEventListener("DOMContentLoaded", () => {
             lensGeo.setAttribute("color", new THREE.BufferAttribute(lensCol, 3));
 
             const lensMat = new THREE.PointsMaterial({
-                size: 0.36,
+                size: 0.34,
                 map: glowTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.92,
+                opacity: 0.94,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
@@ -529,9 +541,88 @@ document.addEventListener("DOMContentLoaded", () => {
             blackHoleGroup.add(lensParticles);
 
             // ------------------------------------------------------------------
-            // 4B. WARPED CODE WATERFALL & SPACETIME CURVATURE (PINTEREST PIN ARTWORK)
+            // 4B. COLOSSAL BIPOLAR RELATIVISTIC ASTROPHYSICAL JETS (REFERENCE ARTWORK)
             // ------------------------------------------------------------------
-            // 1. Dynamic In-Memory Code Matrix Texture
+            const jetCount = 20000;
+            const jetGeo = new THREE.BufferGeometry();
+            const jetPos = new Float32Array(jetCount * 3);
+            const jetCol = new Float32Array(jetCount * 3);
+            const jetData = []; // Store y, direction, vy, radiusSpread, theta, baseColor
+
+            for (let i = 0; i < jetCount; i++) {
+                const isNorth = i % 2 === 0;
+                const direction = isNorth ? 1.0 : -1.0;
+
+                // Height distribution: dense near pole nozzle, stretching up to 28 units
+                const heightFrac = Math.pow(Math.random(), 1.4);
+                const y = direction * (0.3 + heightFrac * 26.0);
+                const absY = Math.abs(y);
+
+                // Collimated nozzle flaring into conical plume
+                const coreRadius = 0.32 + 0.34 * Math.pow(absY, 0.72);
+                const radialSpread = coreRadius * (0.15 + Math.random() * 0.95);
+                const theta = Math.random() * Math.PI * 2;
+
+                const x = radialSpread * Math.cos(theta);
+                const z = radialSpread * Math.sin(theta);
+
+                jetPos[i * 3] = x;
+                jetPos[i * 3 + 1] = y;
+                jetPos[i * 3 + 2] = z;
+
+                // Relativistic velocity: particles shoot outwards at high speed
+                const vy = direction * (3.2 + Math.random() * 4.6);
+
+                // Color gradient: Incandescent core white -> Diamond cyan-white -> Sparkling starlight
+                let jr, jg, jb;
+                if (absY < 5.0) {
+                    jr = 1.0; jg = 1.0; jb = 1.0;
+                } else if (absY < 15.0) {
+                    jr = 0.92; jg = 0.97; jb = 1.0;
+                } else {
+                    const tint = Math.random();
+                    if (tint < 0.6) {
+                        jr = 0.88; jg = 0.95; jb = 1.0;
+                    } else {
+                        jr = 0.75; jg = 0.88; jb = 1.0;
+                    }
+                }
+
+                jetCol[i * 3] = jr;
+                jetCol[i * 3 + 1] = jg;
+                jetCol[i * 3 + 2] = jb;
+
+                jetData.push({
+                    y: y,
+                    direction: direction,
+                    vy: vy,
+                    baseRadius: 0.32,
+                    theta: theta,
+                    radialDist: radialSpread / Math.max(0.1, coreRadius),
+                    absMax: 27.5
+                });
+            }
+
+            jetGeo.setAttribute("position", new THREE.BufferAttribute(jetPos, 3));
+            jetGeo.setAttribute("color", new THREE.BufferAttribute(jetCol, 3));
+
+            const jetMat = new THREE.PointsMaterial({
+                size: 0.34,
+                map: glowTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const jetParticles = new THREE.Points(jetGeo, jetMat);
+            blackHoleGroup.add(jetParticles);
+
+            // ------------------------------------------------------------------
+            // 4C. WARPED CODE WATERFALL & SPACETIME CURVATURE (SILVER/CYAN MATRIX)
+            // ------------------------------------------------------------------
+            // 1. Dynamic In-Memory Code Matrix Texture (Diamond / Cyan Phosphor)
             function createCodeMatrixTexture() {
                 const canvas = document.createElement("canvas");
                 canvas.width = 512;
@@ -564,7 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 for (let y = 0; y < 1024; y += 22) {
                     const line = lines[Math.floor(y / 22) % lines.length];
                     const alpha = 0.55 + 0.45 * Math.sin(y * 0.05);
-                    ctx.fillStyle = `rgba(255, 230, 170, ${alpha})`;
+                    ctx.fillStyle = `rgba(224, 242, 254, ${alpha})`;
                     ctx.fillText(line, 12, y + 16);
                 }
                 const tex = new THREE.CanvasTexture(canvas);
@@ -630,7 +721,7 @@ document.addEventListener("DOMContentLoaded", () => {
             spacetimeGeo.computeVertexNormals();
 
             const spacetimeMat = new THREE.MeshBasicMaterial({
-                color: 0xffa028,
+                color: 0x38bdf8,
                 wireframe: true,
                 transparent: true,
                 opacity: 0.11,
@@ -653,9 +744,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const speed = 0.004 + Math.random() * 0.007;
                 const offsetRadius = (Math.random() - 0.5) * 2.8;
 
-                streamCol[i * 3] = 1.0;
-                streamCol[i * 3 + 1] = 0.88 + Math.random() * 0.12;
-                streamCol[i * 3 + 2] = 0.52 + Math.random() * 0.42;
+                streamCol[i * 3] = 0.88 + Math.random() * 0.12;
+                streamCol[i * 3 + 1] = 0.94 + Math.random() * 0.06;
+                streamCol[i * 3 + 2] = 1.0;
 
                 streamData.push({ p, speed, offsetRadius });
             }
@@ -696,15 +787,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 const tint = Math.random();
                 if (tint < 0.45) {
                     starCol[i * 3] = 1.0;
-                    starCol[i * 3 + 1] = 0.90 + Math.random() * 0.08;
-                    starCol[i * 3 + 2] = 0.72 + Math.random() * 0.15;
+                    starCol[i * 3 + 1] = 1.0;
+                    starCol[i * 3 + 2] = 1.0;
                 } else if (tint < 0.8) {
-                    starCol[i * 3] = 0.95;
-                    starCol[i * 3 + 1] = 0.96;
+                    starCol[i * 3] = 0.90;
+                    starCol[i * 3 + 1] = 0.95;
                     starCol[i * 3 + 2] = 1.0;
                 } else {
                     starCol[i * 3] = 0.75;
-                    starCol[i * 3 + 1] = 0.85;
+                    starCol[i * 3 + 1] = 0.88;
                     starCol[i * 3 + 2] = 1.0;
                 }
             }
@@ -725,7 +816,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const starSystem = new THREE.Points(starGeo, starMat);
             scene.add(starSystem);
 
-            // Floating Solar Embers
+            // Floating Diamond Starlight Embers
             const emberCount = 350;
             const emberGeo = new THREE.BufferGeometry();
             const emberPos = new Float32Array(emberCount * 3);
@@ -746,9 +837,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const emberMat = new THREE.PointsMaterial({
                 size: 0.42,
                 map: glowTexture,
-                color: 0xffb84d,
+                color: 0xe2e8f0,
                 transparent: true,
-                opacity: 0.75,
+                opacity: 0.80,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
@@ -791,19 +882,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 scrollY = window.scrollY;
             }, { passive: true });
 
-            // SCAN ACCELERATION STATE
+            // SCAN ACCELERATION STATE (RELATIVISTIC JET ERUPTION)
             let scanSpeedMultiplier = 1.0;
-            let targetCoreIntensity = 4.5;
+            let targetCoreIntensity = 5.5;
 
             setTurbineScanning = function(isScanning) {
                 if (isScanning) {
-                    scanSpeedMultiplier = 3.4;
-                    targetCoreIntensity = 9.5;
-                    photonLight.intensity = 7.0;
+                    scanSpeedMultiplier = 3.6;
+                    targetCoreIntensity = 10.0;
+                    photonLight.intensity = 8.5;
+                    jetLightNorth.intensity = 7.5;
+                    jetLightSouth.intensity = 7.5;
                 } else {
                     scanSpeedMultiplier = 1.0;
-                    targetCoreIntensity = 4.5;
-                    photonLight.intensity = 3.2;
+                    targetCoreIntensity = 5.5;
+                    photonLight.intensity = 4.2;
+                    jetLightNorth.intensity = 3.8;
+                    jetLightSouth.intensity = 3.8;
                 }
             };
 
@@ -819,7 +914,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             // ------------------------------------------------------------------
-            // RENDER LOOP (60 FPS KEPLERIAN DYNAMICS)
+            // RENDER LOOP (60 FPS KEPLERIAN DYNAMICS & POLAR JETS)
             // ------------------------------------------------------------------
             let clock = new THREE.Clock();
 
@@ -842,7 +937,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     dPos[i * 3] = x;
                     dPos[i * 3 + 2] = z;
 
-                    const dopplerFactor = 1.0 - (x / item.r) * 0.42;
+                    const dopplerFactor = 1.0 - (x / item.r) * 0.38;
                     dCol[i * 3] = Math.min(1.0, item.baseR * dopplerFactor);
                     dCol[i * 3 + 1] = Math.min(1.0, item.baseG * dopplerFactor);
                     dCol[i * 3 + 2] = Math.min(1.0, item.baseB * dopplerFactor);
@@ -863,6 +958,32 @@ document.addEventListener("DOMContentLoaded", () => {
                     lPos[i * 3 + 1] = y;
                 }
                 lensGeo.attributes.position.needsUpdate = true;
+
+                // 2B. Colossal Relativistic Astrophysical Polar Jets Dynamic Flow
+                const jPos = jetGeo.attributes.position.array;
+                const jetSpeedBoost = scanSpeedMultiplier * 1.35;
+
+                for (let i = 0; i < jetCount; i++) {
+                    const item = jetData[i];
+                    item.y += item.vy * delta * jetSpeedBoost;
+
+                    // When particle shoots past jet boundary, loop back to the nozzle
+                    if (Math.abs(item.y) > item.absMax) {
+                        item.y = item.direction * (0.25 + Math.random() * 0.7);
+                        item.theta = Math.random() * Math.PI * 2;
+                    }
+
+                    const absY = Math.abs(item.y);
+                    const coreRadius = 0.32 + 0.34 * Math.pow(absY, 0.72);
+                    const currentRadius = coreRadius * item.radialDist;
+
+                    // Relativistic helical synchrotron swirl along the vertical axis
+                    const swirlAngle = item.theta + item.y * 0.16 + elapsedTime * 1.4 * item.direction;
+                    jPos[i * 3] = currentRadius * Math.cos(swirlAngle);
+                    jPos[i * 3 + 1] = item.y;
+                    jPos[i * 3 + 2] = currentRadius * Math.sin(swirlAngle);
+                }
+                jetGeo.attributes.position.needsUpdate = true;
 
                 // 3. Photon Ring Pulsar Breathing
                 photonRingMesh.scale.setScalar(1.0 + Math.sin(elapsedTime * 2.4) * 0.015);

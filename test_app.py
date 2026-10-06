@@ -133,5 +133,25 @@ class TestPhishingDetector(unittest.TestCase):
         right_res.close()
 
 
+    def test_api_chat(self):
+        """Verify POST /api/chat handles AI assistant messages and validation."""
+        # Empty message
+        res = self.client.post("/api/chat", data=json.dumps({"message": ""}), content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+
+        # Valid prompt
+        res = self.client.post("/api/chat", data=json.dumps({"message": "What is phishing?"}), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertIn(data["status"], ["success", "error"])
+        self.assertIn("has_key", data)
+
+    def test_favicon_route(self):
+        """Verify GET /favicon.ico returns 200 and serves favicon."""
+        res = self.client.get("/favicon.ico")
+        self.assertEqual(res.status_code, 200)
+        res.close()
+
+
 if __name__ == "__main__":
     unittest.main()

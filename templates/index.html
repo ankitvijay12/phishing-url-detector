@@ -11,14 +11,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- Favicon & Cyber Eye Brand Touch Icons (Matches media_1791293240677.png) -->
+    <link rel="icon" type="image/png" sizes="64x64" href="static/images/favicon-64.png?v=eye-v1">
+    <link rel="icon" type="image/png" sizes="32x32" href="static/images/favicon.png?v=eye-v1">
+    <link rel="shortcut icon" type="image/x-icon" href="static/images/favicon.ico?v=eye-v1">
+    <link rel="apple-touch-icon" href="static/images/logo.png?v=eye-v1">
+
     <!-- Preload Critical Intro Assets for Instant 60fps Decoded Playback -->
+    <link rel="preload" as="image" href="static/images/logo.png?v=eye-v1">
     <link rel="preload" as="image" href="static/images/hand_left.png">
     <link rel="preload" as="image" href="static/images/hand_right.png">
+    <link rel="preload" as="image" href="static/images/akera_orb.png">
 
     <!-- Three.js WebGL Engine for 3D Background & Mechanical Turbine Spiral -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-    <link rel="stylesheet" href="static/style.css?v=hands3">
+    <link rel="stylesheet" href="static/style.css?v=voice-mic-v2">
 </head>
 <body class="cyber-platform-body">
     <!-- ====================================================================
@@ -90,11 +98,8 @@
         <div class="nav-container">
             <!-- Brand Logo -->
             <a href="#hero-section" class="brand-link">
-                <div class="brand-shield-mark">
-                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        <path d="m9 12 2 2 4-4"></path>
-                    </svg>
+                <div class="brand-shield-mark" title="PhishGuard Cyber Eye">
+                    <img src="static/images/logo.png?v=eye-v1" alt="PhishGuard Cyber Eye" class="brand-logo-img">
                 </div>
                 <div class="brand-meta">
                     <span class="brand-title">PHISHGUARD</span>
@@ -148,53 +153,6 @@
             </div>
         </div>
     </header>
-
-    <!-- Floating Cosmic Telemetry HUD Layer -->
-    <div class="cosmic-hud-strip">
-        <div class="hud-pill"><span class="hud-dot live-blink"></span> POLAR_JET: <strong>0.98c ACTIVE</strong></div>
-        <div class="hud-divider"></div>
-        <div class="hud-pill">SINGULARITY_RADAR: <strong>ONLINE</strong></div>
-        <div class="hud-divider"></div>
-        <div class="hud-pill">INGESTION_STREAM: <strong>1.4M THREATS/SEC</strong></div>
-        <div class="hud-divider"></div>
-        <div class="hud-pill">CURVATURE: <strong>α = 4GM/c²</strong></div>
-        <div class="hud-divider"></div>
-        <div class="hud-pill">MODEL_LATENCY: <strong>18ms</strong></div>
-        <div class="hud-divider"></div>
-        <div class="hud-pill">AIR_GAP_SHIELD: <strong>100% IN-MEMORY</strong></div>
-    </div>
-
-    <!-- Ambient Code Waterfall Stream Overlay (Matching Pinterest Pin Artwork) -->
-    <div class="hud-code-waterfall-stream" aria-hidden="true">
-        <div class="code-stream-inner">
-            <span>0x7FFE2A91 SELECT * FROM threat_vectors WHERE risk > 0.85</span>
-            <span>POST /api/intercept -> HTTP/2 403 QUARANTINE_ISOLATE</span>
-            <span>https://paypal.com.verify-auth.xyz/session=0x9f821</span>
-            <span>01010000 01101001 01101111 01110011 01101000</span>
-            <span>SHA256: 4e82b70fc931a... [ZERO-DAY BUFFER FLUSH]</span>
-            <span>SINGULARITY INGESTION VECTOR: r -> r_s [C=299792km/s]</span>
-            <span>EVALUATING DOMAIN: suspicious punycode spoof detected</span>
-            <span>01100001 01110101 01110100 01101000 00101101 01110011</span>
-            <span>HTTP/1.1 200 INGESTED INTO SINGULARITY</span>
-            <span>http://192.168.1.45:8080/secure-update.php?id=829</span>
-            <span>GRAVITATIONAL CURVATURE: α = 4GM / (c^2 * b)</span>
-            <span>01100100 01100101 01100110 01100101 01101110 01110011</span>
-            <span>MODEL_INFERENCE: Random Forest -> Phishing (100.0%)</span>
-            <span>DECEPTIVE TOKEN ANOMALY: @ symbol obfuscation detected</span>
-            <span>01001011 01000101 01010000 01001100 01000101 01010010</span>
-            <span>EVENT_HORIZON_SHIELD: 100% INTACT // ZERO ESCAPE</span>
-            <!-- Seamless loop clone -->
-            <span>0x7FFE2A91 SELECT * FROM threat_vectors WHERE risk > 0.85</span>
-            <span>POST /api/intercept -> HTTP/2 403 QUARANTINE_ISOLATE</span>
-            <span>https://paypal.com.verify-auth.xyz/session=0x9f821</span>
-            <span>01010000 01101001 01101111 01110011 01101000</span>
-            <span>SHA256: 4e82b70fc931a... [ZERO-DAY BUFFER FLUSH]</span>
-            <span>SINGULARITY INGESTION VECTOR: r -> r_s [C=299792km/s]</span>
-            <span>EVALUATING DOMAIN: suspicious punycode spoof detected</span>
-            <span>01100001 01110101 01110100 01101000 00101101 01110011</span>
-        </div>
-    </div>
-
 
     <main class="page-content">
         <!-- ================================================================
@@ -693,94 +651,107 @@
 
     <!-- Akera Cyber AI Assistant Widget -->
     <div id="ai-assistant-widget" class="ai-assistant-widget akera-widget">
-        <!-- Floating Launcher Pill -->
-        <button id="ai-assistant-toggle" class="ai-assistant-toggle-btn akera-toggle" type="button" aria-label="Toggle Akera Cyber AI" title="Activate Akera Cyber Intelligence">
-            <span class="akera-pulse-wave"></span>
-            <span class="ai-status-pulse"></span>
+        <!-- Floating Launcher Orb Button (Smiley Logo Only, Enlarged & Animated) -->
+        <button id="ai-assistant-toggle" class="ai-assistant-toggle-btn akera-toggle" type="button" aria-label="Activate Akera Voice Assistant" title="Activate Akera Voice Assistant">
+            <span class="akera-pulse-wave ring-1"></span>
+            <span class="akera-pulse-wave ring-2"></span>
             <span class="ai-toggle-icon">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                    <polyline points="2 17 12 22 22 17"></polyline>
-                    <polyline points="2 12 12 17 22 12"></polyline>
-                </svg>
+                <img src="static/images/akera_orb.png" alt="Akera AI Orb" class="akera-orb-icon" width="48" height="48">
             </span>
-            <span class="ai-toggle-text">AKERA // AI</span>
         </button>
+    </div>
 
-        <!-- Floating Chat / Assistant Panel -->
-        <div id="ai-assistant-panel" class="ai-assistant-panel akera-panel hidden" role="dialog" aria-labelledby="ai-panel-title">
-            <!-- Glowing Scanline Overlay -->
-            <div class="akera-scanline-fx"></div>
+    <!-- OpenAI Key Config Modal (Standalone Dialog) -->
+    <div id="ai-chatgpt-modal" class="ai-gemini-modal hidden">
+        <div class="ai-gemini-modal-content">
+            <div class="gemini-modal-header">
+                <div class="gemini-modal-title">
+                    <span class="sparkle">✨</span> OPENAI COGNITION CONFIG
+                </div>
+                <button type="button" id="chatgpt-modal-close" class="gemini-modal-close-btn" aria-label="Close Config">&times;</button>
+            </div>
+            <p class="gemini-modal-desc">
+                Connect your OpenAI API key to empower Akera with real-time intelligence for all custom commands and questions.
+            </p>
+            <div class="gemini-input-group">
+                <label for="chatgpt-api-key-input">OpenAI API Key (starts with sk-...):</label>
+                <div class="gemini-input-row">
+                    <input type="password" id="chatgpt-api-key-input" placeholder="Paste your sk-... key" autocomplete="off" spellcheck="false" />
+                    <button type="button" id="chatgpt-api-key-save-btn">Save</button>
+                </div>
+            </div>
+            <div class="gemini-modal-footer">
+                <span id="chatgpt-key-status" class="gemini-key-status">Status: No key saved</span>
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" class="gemini-get-key-link">Get OpenAI API Key ↗</a>
+            </div>
+        </div>
+    </div>
 
-            <div class="ai-panel-header akera-header">
-                <div class="ai-panel-branding">
-                    <div class="akera-avatar-badge">
-                        <div class="akera-avatar-radar"></div>
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--accent-cyan)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                            <polyline points="2 17 12 22 22 17"></polyline>
-                            <polyline points="2 12 12 17 22 12"></polyline>
+    <!-- Akera Siri/Voice Mode Animated Overlay -->
+    <div id="akera-voice-overlay" class="akera-voice-overlay hidden" aria-hidden="true">
+        <div class="voice-overlay-backdrop" id="voice-overlay-backdrop"></div>
+        <div class="voice-overlay-card">
+            <!-- Close button (x) -->
+            <button type="button" id="voice-overlay-close-btn" class="voice-overlay-close" aria-label="Close Voice Assistant" title="Close Voice Mode">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <!-- Atmospheric Ambient Arc Behind Card -->
+            <div class="voice-card-ambient-arc"></div>
+
+            <!-- Top Header & Live Transcription Area -->
+            <div class="voice-overlay-transcript-wrap">
+                <div class="voice-agent-badge">
+                    <span class="voice-badge-dot"></span>
+                    <span id="voice-badge-label" class="voice-badge-text">AKERA VOICE // READY</span>
+                </div>
+                <div id="voice-overlay-transcript" class="voice-overlay-transcript">
+                    Hey, I'm Akera. What would you like help with today?
+                </div>
+            </div>
+
+            <!-- Pre-Commands Quick Action Bar -->
+            <div class="voice-pre-commands-wrap" id="voice-pre-commands">
+                <div class="voice-pre-commands-scroll">
+                    <button type="button" class="voice-cmd-chip" data-query="Hi Akera">🎙️ "Hi Akera"</button>
+                    <button type="button" class="voice-cmd-chip" data-query="kaisi ho">🌸 "Kaisi ho"</button>
+                    <button type="button" class="voice-cmd-chip" data-query="List all commands">⚡ List Commands</button>
+                    <button type="button" class="voice-cmd-chip" data-query="Sample URLs to test">🎯 Sample URLs</button>
+                    <button type="button" class="voice-cmd-chip" data-query="Why is this website safe to use?">🛡️ Why Safe?</button>
+                    <button type="button" class="voice-cmd-chip" data-query="What is the use of PhishGuard?">🎯 Use of PhishGuard</button>
+                    <button type="button" class="voice-cmd-chip" data-query="Zero-Day Phishing">🧬 Zero-Day Phishing</button>
+                    <button type="button" class="voice-cmd-chip" data-query="What should I do if I clicked a phishing link?">🚨 Incident Help</button>
+                    <button type="button" class="voice-cmd-chip" data-query="Model benchmark">📊 Model Stats</button>
+                    <button type="button" class="voice-cmd-chip" data-query="What is homograph and punycode spoofing?">🕵️ Homograph & @ Spoof</button>
+                </div>
+            </div>
+
+            <!-- Center Organic Fluid Glowing Sine Waveform Visualizer -->
+            <div class="voice-waveform-container">
+                <canvas id="akera-voice-sine-canvas" width="380" height="130" class="voice-sine-canvas"></canvas>
+            </div>
+
+            <!-- Bottom Section: Deep Sapphire Radial Bloom & White Circular Mic Button -->
+            <div class="voice-overlay-bottom-zone">
+                <div class="voice-bottom-bloom"></div>
+                <div class="voice-mic-button-wrapper">
+                    <span class="voice-ripple-ring ring-1"></span>
+                    <span class="voice-ripple-ring ring-2"></span>
+                    <span class="voice-ripple-ring ring-3"></span>
+                    <button type="button" id="voice-overlay-mic-btn" class="voice-overlay-mic-button mic-closed" aria-label="Toggle Voice Listening" title="Microphone is Off • Click to Speak">
+                        <svg class="voice-mic-svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                         </svg>
-                        <span class="ai-online-dot"></span>
-                    </div>
-                    <div>
-                        <div class="akera-title-row">
-                            <h4 id="ai-panel-title" class="ai-panel-title">AKERA</h4>
-                            <span class="akera-chip-ver">v5.0 COSMIC</span>
-                        </div>
-                        <span class="ai-panel-subtitle">Neural Security Copilot • Ready</span>
-                    </div>
-                </div>
-                <div class="ai-panel-actions">
-                    <button id="ai-clear-btn" class="ai-btn-ghost" type="button" title="Purge session memory" aria-label="Clear Chat">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                    <button id="ai-close-btn" class="ai-btn-ghost" type="button" title="Minimize Akera" aria-label="Close Assistant">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
-            </div>
-
-            <div id="ai-messages-container" class="ai-messages-container">
-                <!-- Welcome Bot Message -->
-                <div class="ai-msg ai-msg-bot">
-                    <div class="ai-msg-bubble akera-bubble">
-                        <div class="akera-agent-tag"><span>AKERA // SINGULARITY ADVISOR</span></div>
-                        <p><strong>Operator link confirmed.</strong> I am <strong>Akera</strong>, your neural cybersecurity copilot.</p>
-                        <p>I operate on strictly verified security protocols. Greet me, paste a suspicious link to inspect, or select an authorized pre-prompt below:</p>
-                    </div>
-                </div>
-
-                <!-- Quick Query Suggestion Chips -->
-                <div class="ai-suggestions-wrap" id="ai-suggestions">
-                    <span class="ai-suggestions-label">AUTHORIZED SECURITY PROTOCOLS</span>
-                    <div class="ai-suggestions-scroll">
-                        <button class="ai-sugg-chip" data-query="Why is this website safe to use?"><span class="chip-glow-bullet"></span>🛡️ Why is this website safe?</button>
-                        <button class="ai-sugg-chip" data-query="What is the use of PhishGuard?"><span class="chip-glow-bullet"></span>🎯 What is the use of PhishGuard?</button>
-                        <button class="ai-sugg-chip" data-query="How does PhishGuard detect phishing links?"><span class="chip-glow-bullet"></span>🔍 How does detection work?</button>
-                        <button class="ai-sugg-chip" data-query="What should I do if I clicked a phishing link?"><span class="chip-glow-bullet"></span>⚠️ What if I clicked a bad link?</button>
-                        <button class="ai-sugg-chip" data-query="Explain URL risk levels and confidence score"><span class="chip-glow-bullet"></span>📊 Explain risk & confidence</button>
-                        <button class="ai-sugg-chip" data-query="What is homograph and punycode spoofing?"><span class="chip-glow-bullet"></span>🕵️ Homograph & @ tricks</button>
-                    </div>
+                <div id="voice-overlay-status-subtext" class="voice-status-subtext">
+                    Mic is off • Tap to speak or select a quick command
                 </div>
             </div>
-
-            <!-- Footer / Input Form -->
-            <form id="ai-chat-form" class="ai-chat-form akera-form" autocomplete="off">
-                <input id="ai-chat-input" type="text" class="ai-chat-input akera-input" placeholder="Message Akera or paste URL..." maxlength="500" required>
-                <button type="button" id="ai-paste-btn" class="ai-paste-btn" title="Paste URL" aria-label="Paste URL into chat">
-                    <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                    </svg>
-                </button>
-                <button id="ai-chat-send" type="submit" class="ai-chat-send-btn akera-send" aria-label="Transmit to Akera" title="Transmit">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
-                </button>
-            </form>
         </div>
     </div>
 
@@ -788,13 +759,18 @@
     <footer class="platform-footer">
         <div class="footer-container">
             <div class="footer-brand-info">
-                <span class="footer-title">PHISHGUARD<span class="cyan-accent">.AI</span></span>
+                <div style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <div class="brand-shield-mark" style="width: 26px; height: 26px;">
+                        <img src="static/images/logo.png?v=eye-v1" alt="PhishGuard Cyber Eye" class="brand-logo-img">
+                    </div>
+                    <span class="footer-title">PHISHGUARD<span class="cyan-accent">.AI</span></span>
+                </div>
                 <span class="footer-note">Machine Learning Threat Intelligence Platform • Built with Python & Scikit-Learn</span>
             </div>
             <a href="#hero-section" class="footer-back-link">BACK TO TOP ↑</a>
         </div>
     </footer>
 
-    <script src="static/script.js?v=hands3"></script>
+    <script src="static/script.js?v=voice-mic-v2"></script>
 </body>
 </html>

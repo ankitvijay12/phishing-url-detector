@@ -733,7 +733,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const codeWaterfallMesh = new THREE.Mesh(ribbonGeo, codeMat);
-            blackHoleGroup.add(codeWaterfallMesh);
+            codeWaterfallMesh.visible = false;
+            // Text ribbon disabled to keep cosmic scene clean of code text
 
             // 3. Spacetime Curvature Coordinate Grid (Einstein Potential Well)
             const gridRings = 22;
@@ -1860,31 +1861,836 @@ document.addEventListener("DOMContentLoaded", () => {
         const chatForm = document.getElementById("ai-chat-form");
         const chatInput = document.getElementById("ai-chat-input");
         const suggestionsWrap = document.getElementById("ai-suggestions");
+        const voiceBtn = document.getElementById("ai-voice-btn");
+        const voiceToggleBtn = document.getElementById("ai-voice-toggle-btn");
+        const voiceStatus = document.getElementById("ai-voice-status");
 
-        if (!toggleBtn || !panel || !chatForm || !chatInput || !messagesContainer) return;
+        if (!toggleBtn) return;
 
         let isOpen = false;
 
+        // ------------------------------------------------------------------
+        // AKERA VOICE ENGINE (SPEECH SYNTHESIS TTS)
+        // ------------------------------------------------------------------
+        const AkeraVoice = {
+            speechEnabled: true,
+            synth: ('speechSynthesis' in window) ? window.speechSynthesis : null,
+            selectedVoice: null,
+            isSpeaking: false,
+            activeTimer: null,
+
+            init() {
+                if (!this.synth) return;
+                const pickVoice = () => {
+                    const voices = this.synth.getVoices();
+                    if (!voices || voices.length === 0) return;
+                    const preferredNames = [
+                        "Samantha", "Victoria", "Karen", "Google US English", 
+                        "Microsoft Zira", "Microsoft Jenny", "Natural", "Serena", "Fiona", "Moira"
+                    ];
+                    for (const name of preferredNames) {
+                        const match = voices.find(v => v.name && v.name.includes(name));
+                        if (match) {
+                            this.selectedVoice = match;
+                            return;
+                        }
+                    }
+                    this.selectedVoice = voices.find(v => v.lang && v.lang.startsWith("en") && !v.name.toLowerCase().includes("male"))
+                                      || voices.find(v => v.lang && v.lang.startsWith("en"))
+                                      || voices[0] || null;
+                };
+                pickVoice();
+                if (this.synth.onvoiceschanged !== undefined) {
+                    this.synth.onvoiceschanged = pickVoice;
+                }
+            },
+
+            cleanText(text) {
+                if (!text) return "";
+                return text.replace(/<[^>]*>/g, " ")
+                           .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
+                           .replace(/[\u{2600}-\u{26FF}]/gu, "")
+                           .replace(/[\u{2700}-\u{27BF}]/gu, "")
+                           .replace(/[\u{1F600}-\u{1F64F}]/gu, "")
+                           .replace(/\s+/g, " ")
+                           .trim();
+            },
+
+            speakPhrases(phrases, pauseMs = 550, askFollowUp = false) {
+                if (!this.speechEnabled || !this.synth) return;
+                this.stopSpeaking();
+
+                const list = Array.isArray(phrases) ? [...phrases] : [phrases];
+                if (askFollowUp) {
+                    list.push("Is there anything else I can help you with?");
+                }
+
+                const cleaned = list.map(p => this.cleanText(p)).filter(Boolean);
+                if (cleaned.length === 0) return;
+
+                const header = panel ? panel.querySelector(".ai-panel-header") : null;
+                let index = 0;
+
+                const playNext = () => {
+                    if (!isVoiceOverlayOpen && index > 0) {
+                        this.stopSpeaking();
+                        return;
+                    }
+
+                    if (index >= cleaned.length) {
+                        if (header) header.classList.remove("speaking-active");
+                        this.isSpeaking = false;
+                        if (typeof setVoiceOverlayState === "function" && isVoiceOverlayOpen) {
+                            setVoiceOverlayState("IDLE", "Tap mic to speak or select a quick command");
+                        }
+                        return;
+                    }
+
+                    const phrase = cleaned[index];
+                    index++;
+
+                    const utter = new SpeechSynthesisUtterance(phrase);
+                    if (this.selectedVoice) {
+                        utter.voice = this.selectedVoice;
+                    }
+                    utter.rate = 1.0;
+                    utter.pitch = 1.05;
+                    utter.volume = 1.0;
+
+                    utter.onstart = () => {
+                        this.isSpeaking = true;
+                        if (header) header.classList.add("speaking-active");
+                    };
+
+                    utter.onend = () => {
+                        if (!isVoiceOverlayOpen) {
+                            this.isSpeaking = false;
+                            return;
+                        }
+                        if (index < cleaned.length) {
+                            this.activeTimer = setTimeout(playNext, pauseMs);
+                        } else {
+                            if (header) header.classList.remove("speaking-active");
+                            this.isSpeaking = false;
+                            if (typeof setVoiceOverlayState === "function" && isVoiceOverlayOpen) {
+                                setVoiceOverlayState("IDLE", "Tap mic to speak or select a quick command");
+                            }
+                        }
+                    };
+
+                    utter.onerror = () => {
+                        if (header) header.classList.remove("speaking-active");
+                        this.isSpeaking = false;
+                        if (typeof setVoiceOverlayState === "function" && isVoiceOverlayOpen) {
+                            setVoiceOverlayState("IDLE", "Tap mic to speak or select a quick command");
+                        }
+                    };
+
+                    try {
+                        this.synth.speak(utter);
+                    } catch (e) {
+                        console.warn("Akera Voice speech error:", e);
+                    }
+                };
+
+                playNext();
+            },
+
+            speak(text, askFollowUp = false) {
+                if (!this.speechEnabled || !this.synth || !text) return;
+                this.speakPhrases([text], 480, askFollowUp);
+            },
+
+            stopSpeaking() {
+                if (this.activeTimer) {
+                    clearTimeout(this.activeTimer);
+                    this.activeTimer = null;
+                }
+                if (this.synth) {
+                    try { this.synth.cancel(); } catch (e) {}
+                }
+                this.isSpeaking = false;
+                const header = panel ? panel.querySelector(".ai-panel-header") : null;
+                if (header) header.classList.remove("speaking-active");
+            }
+        };
+
+        AkeraVoice.init();
+
+        // ------------------------------------------------------------------
+        // AKERA COSMIC VOICE OVERLAY & SINE WAVE CANVAS (MATCHES media_1791290656710.png)
+        // ------------------------------------------------------------------
+        const voiceOverlay = document.getElementById("akera-voice-overlay");
+        const voiceOverlayCloseBtn = document.getElementById("voice-overlay-close-btn");
+        const voiceOverlayBackdrop = document.getElementById("voice-overlay-backdrop");
+        const voiceOverlayTranscript = document.getElementById("voice-overlay-transcript");
+        const voiceBadgeLabel = document.getElementById("voice-badge-label");
+        const voiceOverlayMicBtn = document.getElementById("voice-overlay-mic-btn");
+        const voiceOverlaySubtext = document.getElementById("voice-overlay-status-subtext");
+        const voiceSineCanvas = document.getElementById("akera-voice-sine-canvas");
+
+        let voiceCanvasCtx = null;
+        let voiceCanvasAnimId = null;
+        let wavePhase = 0;
+        let currentWaveAmp = 8;
+        let targetWaveAmp = 8;
+        let isVoiceOverlayOpen = false;
+
+        // Real-Time Web Audio API Mic Analyser
+        let audioStream = null;
+        let audioContext = null;
+        let audioAnalyser = null;
+        let audioDataArray = null;
+
+        function initAudioAnalyser(stream) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                if (!audioContext || audioContext.state === "closed") {
+                    audioContext = new AudioCtx();
+                }
+                if (audioContext.state === "suspended") {
+                    audioContext.resume();
+                }
+                const source = audioContext.createMediaStreamSource(stream);
+                audioAnalyser = audioContext.createAnalyser();
+                audioAnalyser.fftSize = 64;
+                audioAnalyser.smoothingTimeConstant = 0.75;
+                audioDataArray = new Uint8Array(audioAnalyser.frequencyBinCount);
+                source.connect(audioAnalyser);
+            } catch (e) {
+                console.warn("Audio analyser setup warning:", e);
+            }
+        }
+
+        function initVoiceSineCanvas() {
+            if (!voiceSineCanvas) return;
+            voiceCanvasCtx = voiceSineCanvas.getContext("2d");
+            resizeVoiceCanvas();
+            window.addEventListener("resize", resizeVoiceCanvas);
+        }
+
+        function resizeVoiceCanvas() {
+            if (!voiceSineCanvas) return;
+            const rect = voiceSineCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const w = rect.width > 0 ? rect.width : 380;
+            const h = rect.height > 0 ? rect.height : 170;
+            voiceSineCanvas.width = w * dpr;
+            voiceSineCanvas.height = h * dpr;
+            if (voiceCanvasCtx) {
+                voiceCanvasCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+        }
+
+        function renderVoiceSineWaves() {
+            if (!voiceSineCanvas || !voiceCanvasCtx || !isVoiceOverlayOpen) return;
+
+            const rect = voiceSineCanvas.getBoundingClientRect();
+            const width = rect.width > 0 ? rect.width : 380;
+            const height = rect.height > 0 ? rect.height : 170;
+            const centerY = height / 2;
+
+            voiceCanvasCtx.clearRect(0, 0, width, height);
+
+            // 1. Measure real-time microphone volume if available
+            let realMicVolume = 0;
+            if (audioAnalyser && audioDataArray && isListening) {
+                audioAnalyser.getByteFrequencyData(audioDataArray);
+                let sum = 0;
+                for (let i = 0; i < audioDataArray.length; i++) {
+                    sum += audioDataArray[i];
+                }
+                realMicVolume = sum / audioDataArray.length;
+            }
+
+            // 2. Dynamically modulate target amplitude
+            if (AkeraVoice.isSpeaking) {
+                targetWaveAmp = 28 + Math.sin(Date.now() * 0.008) * 12;
+            } else if (isListening) {
+                if (realMicVolume > 6) {
+                    targetWaveAmp = Math.min(54, 14 + realMicVolume * 1.3);
+                } else if (targetWaveAmp < 15) {
+                    targetWaveAmp = 9 + Math.sin(Date.now() * 0.003) * 3;
+                }
+            }
+
+            currentWaveAmp += (targetWaveAmp - currentWaveAmp) * 0.14;
+            wavePhase += 0.038;
+
+            // Multi-layer glowing wave ribbons matching media_1791290656710.png
+            const waveLayers = [
+                { color: "rgba(129, 140, 248, 0.45)", shadow: "#818cf8", blur: 12, lineWidth: 1.8, freq: 0.018, speed: 0.03, ampScale: 0.7, phaseOff: 3.2 },
+                { color: "rgba(37, 99, 235, 0.85)", shadow: "#3b82f6", blur: 18, lineWidth: 2.6, freq: 0.014, speed: -0.035, ampScale: 0.9, phaseOff: 1.8 },
+                { color: "rgba(56, 189, 248, 0.95)", shadow: "#38bdf8", blur: 22, lineWidth: 2.8, freq: 0.022, speed: 0.045, ampScale: 1.05, phaseOff: 0.6 },
+                { color: "#ffffff", shadow: "#ffffff", blur: 16, lineWidth: 3.0, freq: 0.016, speed: 0.04, ampScale: 1.0, phaseOff: 0.0 }
+            ];
+
+            waveLayers.forEach(layer => {
+                voiceCanvasCtx.save();
+                voiceCanvasCtx.beginPath();
+                voiceCanvasCtx.strokeStyle = layer.color;
+                voiceCanvasCtx.shadowColor = layer.shadow;
+                voiceCanvasCtx.shadowBlur = layer.blur;
+                voiceCanvasCtx.lineWidth = layer.lineWidth;
+                voiceCanvasCtx.lineCap = "round";
+                voiceCanvasCtx.lineJoin = "round";
+
+                for (let x = 0; x <= width; x += 2) {
+                    const normX = x / width;
+                    const envelope = Math.sin(normX * Math.PI);
+
+                    const y = centerY + Math.sin(x * layer.freq + wavePhase * (layer.speed / 0.038) + layer.phaseOff) *
+                              Math.cos(x * 0.009 + wavePhase * 0.4) *
+                              currentWaveAmp * layer.ampScale * envelope;
+
+                    if (x === 0) {
+                        voiceCanvasCtx.moveTo(x, y);
+                    } else {
+                        voiceCanvasCtx.lineTo(x, y);
+                    }
+                }
+                voiceCanvasCtx.stroke();
+                voiceCanvasCtx.restore();
+            });
+
+            voiceCanvasAnimId = requestAnimationFrame(renderVoiceSineWaves);
+        }
+
+        const micWrapper = document.querySelector(".voice-mic-button-wrapper");
+
+        function updateMicButtonVisual(isOpen) {
+            if (!voiceOverlayMicBtn) return;
+            if (isOpen) {
+                voiceOverlayMicBtn.classList.add("mic-open", "is-listening");
+                voiceOverlayMicBtn.classList.remove("mic-closed");
+                voiceOverlayMicBtn.title = "Microphone is Listening • Click to Stop";
+                if (micWrapper) micWrapper.classList.add("mic-active");
+            } else {
+                voiceOverlayMicBtn.classList.remove("mic-open", "is-listening");
+                voiceOverlayMicBtn.classList.add("mic-closed");
+                voiceOverlayMicBtn.title = "Microphone is Off • Click to Speak";
+                if (micWrapper) micWrapper.classList.remove("mic-active");
+            }
+        }
+
+        function openVoiceOverlay() {
+            if (!voiceOverlay) return;
+            isVoiceOverlayOpen = true;
+            voiceOverlay.classList.remove("hidden");
+            voiceOverlay.setAttribute("aria-hidden", "false");
+            setVoiceOverlayState("IDLE", "Standing by... Tap microphone to speak or select a quick command");
+            updateMicButtonVisual(false);
+            resizeVoiceCanvas();
+            if (voiceCanvasAnimId) cancelAnimationFrame(voiceCanvasAnimId);
+            voiceCanvasAnimId = requestAnimationFrame(renderVoiceSineWaves);
+        }
+
+        function closeVoiceOverlay() {
+            if (!voiceOverlay) return;
+            isVoiceOverlayOpen = false;
+            shouldKeepListening = false;
+            clearSilence();
+            AkeraVoice.stopSpeaking();
+            if (recognition) {
+                recognition.onstart = null;
+                recognition.onresult = null;
+                recognition.onerror = null;
+                recognition.onend = null;
+                try { recognition.abort(); } catch(e){}
+            }
+            stopListeningUi();
+            updateMicButtonVisual(false);
+            voiceOverlay.classList.add("hidden");
+            voiceOverlay.setAttribute("aria-hidden", "true");
+            if (voiceCanvasAnimId) {
+                cancelAnimationFrame(voiceCanvasAnimId);
+                voiceCanvasAnimId = null;
+            }
+        }
+
+        if (voiceOverlayCloseBtn) {
+            voiceOverlayCloseBtn.addEventListener("click", closeVoiceOverlay);
+        }
+        if (voiceOverlayBackdrop) {
+            voiceOverlayBackdrop.addEventListener("click", closeVoiceOverlay);
+        }
+
+        function setVoiceOverlayState(state, transcriptText) {
+            const isMicOpen = (state === "LISTENING" || state === "HEARING_SPEECH");
+            updateMicButtonVisual(isMicOpen);
+
+            if (voiceBadgeLabel) {
+                if (state === "LISTENING") {
+                    voiceBadgeLabel.textContent = "AKERA VOICE // LISTENING";
+                } else if (state === "HEARING_SPEECH") {
+                    voiceBadgeLabel.textContent = "AKERA VOICE // HEARING SPEECH";
+                } else if (state === "PROCESSING") {
+                    voiceBadgeLabel.textContent = "AKERA // COMPUTING RESPONSE";
+                } else if (state === "SPEAKING") {
+                    voiceBadgeLabel.textContent = "AKERA // SPEAKING";
+                } else {
+                    voiceBadgeLabel.textContent = "AKERA VOICE // STANDBY";
+                }
+            }
+
+            if (voiceOverlayTranscript && transcriptText !== undefined) {
+                voiceOverlayTranscript.innerHTML = transcriptText;
+            }
+
+            if (state === "LISTENING") {
+                targetWaveAmp = 10;
+                if (voiceOverlaySubtext) voiceOverlaySubtext.textContent = "🎙️ Listening... Speak naturally (Tap mic to stop)";
+            } else if (state === "HEARING_SPEECH") {
+                targetWaveAmp = 42;
+                if (voiceOverlaySubtext) voiceOverlaySubtext.textContent = "Transcribing voice in real time...";
+            } else if (state === "PROCESSING") {
+                targetWaveAmp = 16;
+                if (voiceOverlaySubtext) voiceOverlaySubtext.textContent = "Processing with Akera Neural Core...";
+            } else if (state === "SPEAKING") {
+                targetWaveAmp = 32;
+                if (voiceOverlaySubtext) voiceOverlaySubtext.textContent = "Akera vocal synthesis active";
+            } else {
+                targetWaveAmp = 4;
+                if (voiceOverlaySubtext) voiceOverlaySubtext.textContent = "Mic is off • Tap to speak or select a quick command";
+            }
+        }
+
+        initVoiceSineCanvas();
+
+        // ------------------------------------------------------------------
+        // ROBUST SPEECH RECOGNITION (VOICE ASSISTANT STT) & AUDIO CAPTURE
+        // ------------------------------------------------------------------
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isListening = false;
+        let shouldKeepListening = false;
+        let silenceTimer = null;
+        let pendingVoiceQuery = "";
+
+        const subtitleEl = panel ? panel.querySelector(".ai-panel-subtitle") : null;
+        const defaultSubtitle = subtitleEl ? subtitleEl.innerHTML : "Neural Security Copilot • Ready";
+
+        function clearSilence() {
+            if (silenceTimer) {
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+            }
+        }
+
+        function getListeningCardHtml() {
+            return `
+                <div class="ai-msg ai-msg-bot ai-listening-active-card" id="ai-active-listening-card">
+                    <div class="ai-avatar-mini">
+                        <div class="listening-avatar-halo">
+                            <img src="static/images/akera_orb.png" alt="Akera" class="listening-avatar-orb">
+                            <span class="listening-halo-ring"></span>
+                        </div>
+                    </div>
+                    <div class="ai-msg-bubble voice-listening-bubble">
+                        <div class="listening-card-header">
+                            <div class="listening-live-indicator">
+                                <span class="listening-sonar-ping"></span>
+                                <span class="listening-live-dot"></span>
+                                <span class="listening-live-label">AKERA // VOICE LISTENER ACTIVE</span>
+                            </div>
+                            <span class="listening-freq-tag">AWAITING SPEECH</span>
+                        </div>
+
+                        <!-- 20-Bar Animated Holographic Soundwave Visualizer -->
+                        <div class="listening-wave-stage">
+                            <div class="listening-wave-glow-beam"></div>
+                            <div class="listening-soundwave-bars">
+                                <span class="sw-bar w-1"></span>
+                                <span class="sw-bar w-2"></span>
+                                <span class="sw-bar w-3"></span>
+                                <span class="sw-bar w-4"></span>
+                                <span class="sw-bar w-5"></span>
+                                <span class="sw-bar w-6"></span>
+                                <span class="sw-bar w-7"></span>
+                                <span class="sw-bar w-8"></span>
+                                <span class="sw-bar w-9"></span>
+                                <span class="sw-bar w-10"></span>
+                                <span class="sw-bar w-11"></span>
+                                <span class="sw-bar w-12"></span>
+                                <span class="sw-bar w-13"></span>
+                                <span class="sw-bar w-14"></span>
+                                <span class="sw-bar w-15"></span>
+                                <span class="sw-bar w-16"></span>
+                                <span class="sw-bar w-17"></span>
+                                <span class="sw-bar w-18"></span>
+                                <span class="sw-bar w-19"></span>
+                                <span class="sw-bar w-20"></span>
+                            </div>
+                        </div>
+
+                        <div class="listening-speech-feedback">
+                            <div class="speech-status-row">
+                                <span class="mic-wave-icon">🎙️</span>
+                                <div class="speech-feedback-text" id="listening-feedback-text">
+                                    Listening to your voice... Say <strong>"Hi Akera"</strong> or ask a question
+                                </div>
+                            </div>
+                            <div class="listening-actions-row">
+                                <span class="listening-hint-pill">Tip: Say "Hi Akera"</span>
+                                <button type="button" class="listening-stop-btn" id="listening-card-stop-btn">Stop</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startListeningUi() {
+            isListening = true;
+            updateMicButtonVisual(true);
+            if (panel) panel.classList.add("is-listening");
+            if (voiceBtn) voiceBtn.classList.add("listening");
+            if (voiceStatus) voiceStatus.classList.remove("hidden");
+            if (chatInput) chatInput.placeholder = "🎙️ Listening... Speak your command or question";
+            if (subtitleEl) {
+                subtitleEl.innerHTML = '<span class="listening-glow-text">🎙️ LISTENING TO YOUR VOICE...</span>';
+            }
+
+            const existingCard = document.getElementById("ai-active-listening-card");
+            if (!existingCard && messagesContainer) {
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = getListeningCardHtml();
+                const cardEl = tempDiv.firstElementChild;
+                messagesContainer.appendChild(cardEl);
+                scrollToBottom();
+            }
+
+            CyberAudio.playClick(880);
+        }
+
+        function updateListeningInterim(interimText) {
+            const feedbackText = document.getElementById("listening-feedback-text");
+            const statusLiveText = document.getElementById("voice-status-live-text");
+            const cardEl = document.getElementById("ai-active-listening-card");
+
+            if (feedbackText && interimText) {
+                feedbackText.innerHTML = `Hearing: <span class="interim-spoken">"${escapeHtml(interimText)}"</span>...`;
+            }
+            if (statusLiveText && interimText) {
+                statusLiveText.innerHTML = `Hearing: <strong>"${escapeHtml(interimText)}"</strong>...`;
+            }
+            if (cardEl) {
+                cardEl.classList.add("speech-detected");
+            }
+
+            if (interimText) {
+                setVoiceOverlayState("HEARING_SPEECH");
+                if (voiceOverlayTranscript) {
+                    const words = interimText.trim().split(/\s+/);
+                    if (words.length > 2) {
+                        const leadWords = escapeHtml(words.slice(0, words.length - 2).join(" "));
+                        const activeWords = escapeHtml(words.slice(-2).join(" "));
+                        voiceOverlayTranscript.innerHTML = `<span class="voice-spoken-lead">${leadWords} </span><span class="voice-spoken-active">${activeWords}...</span>`;
+                    } else {
+                        voiceOverlayTranscript.innerHTML = `<span class="voice-spoken-active">${escapeHtml(interimText)}...</span>`;
+                    }
+                }
+            }
+        }
+
+        function stopListeningUi() {
+            isListening = false;
+            updateMicButtonVisual(false);
+            if (panel) panel.classList.remove("is-listening");
+            if (voiceBtn) voiceBtn.classList.remove("listening");
+            if (voiceStatus) voiceStatus.classList.add("hidden");
+            if (chatInput) chatInput.placeholder = "Message Akera or say 'Hi Akera'...";
+            if (subtitleEl) {
+                subtitleEl.innerHTML = defaultSubtitle;
+            }
+
+            const cardEl = document.getElementById("ai-active-listening-card");
+            if (cardEl) {
+                cardEl.remove();
+            }
+
+            const statusLiveText = document.getElementById("voice-status-live-text");
+            if (statusLiveText) {
+                statusLiveText.innerHTML = 'Mic is off. Tap mic to speak.';
+            }
+        }
+
+        let isStartingRecognition = false;
+
+        function submitVoiceQuery(cleanQuery) {
+            clearSilence();
+            shouldKeepListening = false;
+            if (recognition) {
+                recognition.onstart = null;
+                recognition.onresult = null;
+                recognition.onerror = null;
+                recognition.onend = null;
+                try { recognition.stop(); } catch(e){}
+            }
+            stopListeningUi();
+            setVoiceOverlayState("PROCESSING", `
+                <div class="voice-chatgpt-searching">
+                    <span class="chatgpt-sparkle-icon">✨</span> Computing response for:<br>
+                    <strong>"${escapeHtml(cleanQuery)}"</strong>
+                </div>
+            `);
+            CyberAudio.playClick(1150);
+            processUserQuery(cleanQuery);
+        }
+
+        function startSpeechRecognition() {
+            if (!SpeechRec) {
+                appendBotMessage(`
+                    <div class="akera-agent-tag"><span>AKERA // VOICE SUPPORT</span></div>
+                    <p><strong>Speech Recognition is not available in this browser.</strong></p>
+                    <p>Please use Chrome, Edge, or Safari with microphone access enabled.</p>
+                `);
+                setVoiceOverlayState("IDLE", "Speech recognition unavailable in this browser.");
+                return;
+            }
+
+            if (isStartingRecognition || isListening) return;
+            if (AkeraVoice.isSpeaking) return;
+
+            shouldKeepListening = true;
+            pendingVoiceQuery = "";
+            clearSilence();
+
+            if (recognition) {
+                recognition.onstart = null;
+                recognition.onresult = null;
+                recognition.onerror = null;
+                recognition.onend = null;
+                try { recognition.abort(); } catch(e){}
+                recognition = null;
+            }
+
+            try {
+                isStartingRecognition = true;
+                recognition = new SpeechRec();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = "en-US";
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = () => {
+                    isStartingRecognition = false;
+                    isListening = true;
+                    startListeningUi();
+                    setVoiceOverlayState("LISTENING", 'Listening to your voice... Speak your command or question');
+                };
+
+                recognition.onresult = (event) => {
+                    if (AkeraVoice.isSpeaking) return;
+
+                    let interimTranscript = "";
+                    let finalTranscript = "";
+
+                    for (let i = 0; i < event.results.length; ++i) {
+                        const item = event.results[i];
+                        if (item.isFinal) {
+                            finalTranscript += item[0].transcript + " ";
+                        } else {
+                            interimTranscript += item[0].transcript;
+                        }
+                    }
+
+                    const transcribed = (finalTranscript + interimTranscript).trim();
+                    if (transcribed) {
+                        pendingVoiceQuery = transcribed;
+                        if (chatInput) chatInput.value = transcribed;
+                        updateListeningInterim(transcribed);
+
+                        clearSilence();
+                        silenceTimer = setTimeout(() => {
+                            if (pendingVoiceQuery && pendingVoiceQuery.trim()) {
+                                const q = pendingVoiceQuery.trim();
+                                pendingVoiceQuery = "";
+                                submitVoiceQuery(q);
+                            }
+                        }, 1000);
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.warn("Speech Recognition error:", event.error);
+                    isStartingRecognition = false;
+                    if (event.error === "no-speech") {
+                        return;
+                    }
+                    if (event.error === "aborted") {
+                        return;
+                    }
+                    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+                        shouldKeepListening = false;
+                        stopListeningUi();
+                        setVoiceOverlayState("IDLE", "⚠️ Microphone permission blocked. Please allow mic access in your browser address bar.");
+                        appendBotMessage(`
+                            <div class="akera-agent-tag"><span>AKERA // PERMISSION</span></div>
+                            <p><strong>Microphone access blocked.</strong> Please click the camera/microphone icon in your browser URL bar to allow microphone access.</p>
+                        `);
+                    }
+                };
+
+                recognition.onend = () => {
+                    isStartingRecognition = false;
+                    isListening = false;
+
+                    if (!isVoiceOverlayOpen) {
+                        pendingVoiceQuery = "";
+                        shouldKeepListening = false;
+                        stopListeningUi();
+                        return;
+                    }
+
+                    // Immediately submit if user spoke a command before pause/end
+                    if (pendingVoiceQuery && pendingVoiceQuery.trim()) {
+                        const q = pendingVoiceQuery.trim();
+                        pendingVoiceQuery = "";
+                        submitVoiceQuery(q);
+                        return;
+                    }
+
+                    if (shouldKeepListening && isVoiceOverlayOpen && !AkeraVoice.isSpeaking) {
+                        setTimeout(() => {
+                            if (shouldKeepListening && isVoiceOverlayOpen && !isListening && !AkeraVoice.isSpeaking) {
+                                startSpeechRecognition();
+                            }
+                        }, 200);
+                    } else {
+                        stopListeningUi();
+                    }
+                };
+
+                recognition.start();
+            } catch (err) {
+                console.warn("Recognition start error:", err);
+                isStartingRecognition = false;
+                isListening = false;
+                if (shouldKeepListening && isVoiceOverlayOpen && !AkeraVoice.isSpeaking) {
+                    setTimeout(() => {
+                        if (shouldKeepListening && isVoiceOverlayOpen && !AkeraVoice.isSpeaking) startSpeechRecognition();
+                    }, 400);
+                }
+            }
+        }
+
+        async function requestMicAndListen() {
+            CyberAudio.unlock();
+            if (!isVoiceOverlayOpen) {
+                openVoiceOverlay();
+            }
+            setVoiceOverlayState("LISTENING", "Listening to your voice... Speak your command or question");
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    if (!audioStream) {
+                        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        initAudioAnalyser(audioStream);
+                    }
+                } catch (micErr) {
+                    console.warn("Microphone getUserMedia warning:", micErr);
+                    if (micErr.name === "NotAllowedError" || micErr.name === "PermissionDeniedError") {
+                        setVoiceOverlayState("IDLE", "⚠️ Microphone permission blocked. Allow mic in browser settings.");
+                        return;
+                    }
+                }
+            }
+
+            startSpeechRecognition();
+        }
+
+        function startListening() {
+            requestMicAndListen();
+        }
+
+        if (voiceOverlayMicBtn) {
+            voiceOverlayMicBtn.addEventListener("click", () => {
+                CyberAudio.unlock();
+                if (isListening || shouldKeepListening) {
+                    // Turn OFF mic (user touched mic logo to stop)
+                    shouldKeepListening = false;
+                    clearSilence();
+                    pendingVoiceQuery = "";
+                    if (recognition) {
+                        recognition.onstart = null;
+                        recognition.onresult = null;
+                        recognition.onerror = null;
+                        recognition.onend = null;
+                        try { recognition.abort(); } catch(e){}
+                    }
+                    stopListeningUi();
+                    setVoiceOverlayState("IDLE", "Mic is off • Tap to speak or select a quick command");
+                    CyberAudio.playClick(720);
+                } else {
+                    // Turn ON mic (user touched mic logo to start)
+                    CyberAudio.playClick(1050);
+                    requestMicAndListen();
+                }
+            });
+        }
+
+        if (voiceBtn) {
+            voiceBtn.addEventListener("click", () => {
+                if (isListening) {
+                    shouldKeepListening = false;
+                    if (recognition) {
+                        recognition.onstart = null;
+                        recognition.onresult = null;
+                        recognition.onerror = null;
+                        recognition.onend = null;
+                        try { recognition.abort(); } catch(e){}
+                    }
+                    stopListeningUi();
+                } else {
+                    requestMicAndListen();
+                }
+            });
+        }
+
+        if (voiceToggleBtn) {
+            voiceToggleBtn.addEventListener("click", () => {
+                AkeraVoice.speechEnabled = !AkeraVoice.speechEnabled;
+                if (!AkeraVoice.speechEnabled) {
+                    AkeraVoice.stopSpeaking();
+                    voiceToggleBtn.classList.add("muted");
+                    voiceToggleBtn.title = "Voice Audio Muted (Click to unmute)";
+                    CyberAudio.playClick(500);
+                } else {
+                    voiceToggleBtn.classList.remove("muted");
+                    voiceToggleBtn.title = "Voice Audio Output Active (Click to mute)";
+                    CyberAudio.playClick(900);
+                    AkeraVoice.speak("Voice output enabled.");
+                }
+            });
+        }
+
         function openPanel() {
             isOpen = true;
-            panel.classList.remove("hidden");
+            openVoiceOverlay();
             CyberAudio.unlock();
             CyberAudio.playClick(1050);
-            setTimeout(() => chatInput.focus(), 150);
-            scrollToBottom();
         }
 
         function closePanel() {
             isOpen = false;
-            panel.classList.add("hidden");
+            closeVoiceOverlay();
+            AkeraVoice.stopSpeaking();
+            if (isListening && recognition) {
+                try { recognition.stop(); } catch(e){}
+                stopListeningUi();
+            }
             CyberAudio.playClick(720);
         }
 
         toggleBtn.addEventListener("click", () => {
-            if (isOpen) {
-                closePanel();
+            CyberAudio.unlock();
+            if (isVoiceOverlayOpen) {
+                closeVoiceOverlay();
             } else {
-                openPanel();
+                openVoiceOverlay();
+                CyberAudio.playClick(1050);
             }
         });
 
@@ -1895,24 +2701,30 @@ document.addEventListener("DOMContentLoaded", () => {
         if (clearBtn) {
             clearBtn.addEventListener("click", () => {
                 CyberAudio.playClick(600);
-                messagesContainer.innerHTML = `
-                    <div class="ai-msg ai-msg-bot">
-                        <div class="ai-msg-bubble akera-bubble">
-                            <div class="akera-agent-tag"><span>AKERA // RESET</span></div>
-                            <p><strong>Session memory purged.</strong> Akera neural core re-initialized. Select an authorized security protocol to proceed:</p>
+                AkeraVoice.stopSpeaking();
+                if (messagesContainer) {
+                    messagesContainer.innerHTML = `
+                        <div class="ai-msg ai-msg-bot">
+                            <div class="ai-msg-bubble akera-bubble">
+                                <div class="akera-agent-tag"><span>AKERA // RESET</span></div>
+                                <p><strong>Session memory purged.</strong> Akera neural core re-initialized. Select an authorized security protocol to proceed:</p>
+                            </div>
                         </div>
-                    </div>
-                `;
-                if (suggestionsWrap) messagesContainer.appendChild(suggestionsWrap);
-                scrollToBottom();
+                    `;
+                    if (suggestionsWrap) messagesContainer.appendChild(suggestionsWrap);
+                    scrollToBottom();
+                }
             });
         }
 
         function scrollToBottom() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
         }
 
         function appendUserMessage(text) {
+            if (!messagesContainer) return;
             const div = document.createElement("div");
             div.className = "ai-msg ai-msg-user";
             div.innerHTML = `
@@ -1924,6 +2736,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function appendBotMessage(html) {
+            if (!messagesContainer) return;
             const div = document.createElement("div");
             div.className = "ai-msg ai-msg-bot";
             div.innerHTML = `<div class="ai-msg-bubble akera-bubble">${html}</div>`;
@@ -1932,6 +2745,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function showTyping() {
+            if (!messagesContainer) return () => {};
             const div = document.createElement("div");
             div.className = "ai-msg ai-msg-bot ai-typing-wrapper";
             div.innerHTML = `
@@ -1963,6 +2777,8 @@ document.addEventListener("DOMContentLoaded", () => {
         function getPrePromptsHtml() {
             return `
                 <div class="akera-inline-prompts">
+                    <button class="ai-sugg-chip" data-query="⚡ List Commands"><span class="chip-glow-bullet"></span>⚡ List Commands</button>
+                    <button class="ai-sugg-chip" data-query="🎯 Sample URLs"><span class="chip-glow-bullet"></span>🎯 Sample URLs</button>
                     <button class="ai-sugg-chip" data-query="Why is this website safe to use?"><span class="chip-glow-bullet"></span>🛡️ Why is this website safe?</button>
                     <button class="ai-sugg-chip" data-query="What is the use of PhishGuard?"><span class="chip-glow-bullet"></span>🎯 What is the use of PhishGuard?</button>
                     <button class="ai-sugg-chip" data-query="How does PhishGuard detect phishing links?"><span class="chip-glow-bullet"></span>🔍 How does detection work?</button>
@@ -1973,34 +2789,432 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
         }
 
-        // Handle suggestion chips (both initial and inline)
-        messagesContainer.addEventListener("click", (e) => {
-            const chip = e.target.closest(".ai-sugg-chip");
-            if (chip) {
-                const query = chip.getAttribute("data-query");
-                if (query) {
-                    chatInput.value = query;
-                    processUserQuery(query);
+        function getFollowUpHtml() {
+            return `
+                <div class="akera-followup-card">
+                    <div class="akera-followup-prompt">
+                        <span class="followup-sparkle">✨</span>
+                        <span class="followup-text">Is there anything else I can help you with?</span>
+                    </div>
+                    <div class="akera-followup-chips">
+                        <button class="ai-sugg-chip" data-query="⚡ List Commands"><span class="chip-glow-bullet"></span>⚡ List Commands</button>
+                        <button class="ai-sugg-chip" data-query="🎯 Sample URLs"><span class="chip-glow-bullet"></span>🎯 Sample URLs</button>
+                        <button class="ai-sugg-chip" data-query="Why is this website safe to use?"><span class="chip-glow-bullet"></span>🛡️ Safety Guarantee</button>
+                        <button class="ai-sugg-chip" data-query="What should I do if I clicked a phishing link?"><span class="chip-glow-bullet"></span>🚨 Incident Help</button>
+                        <button class="ai-sugg-chip" data-query="Model benchmark"><span class="chip-glow-bullet"></span>📊 Model Stats</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Wire up quick pre-commands inside Voice Overlay (#voice-pre-commands)
+        const voicePreCmdsWrap = document.getElementById("voice-pre-commands");
+        if (voicePreCmdsWrap) {
+            voicePreCmdsWrap.addEventListener("click", (e) => {
+                const chip = e.target.closest(".voice-cmd-chip");
+                if (!chip) return;
+                const query = chip.getAttribute("data-query") || chip.textContent.trim();
+                if (!query) return;
+                CyberAudio.unlock();
+                CyberAudio.playClick(920);
+                submitVoiceQuery(query);
+            });
+        }
+
+        // Handle suggestion chips (both initial and inline), command items, & listening card actions
+        if (messagesContainer) {
+            messagesContainer.addEventListener("click", (e) => {
+                const stopBtn = e.target.closest("#listening-card-stop-btn");
+                if (stopBtn) {
+                    if (isListening && recognition) {
+                        try { recognition.stop(); } catch(err){}
+                    }
+                    stopListeningUi();
+                    return;
+                }
+
+                const voiceMicChip = e.target.closest("#ai-chip-listen-now");
+                if (voiceMicChip) {
+                    if (voiceBtn) voiceBtn.click();
+                    return;
+                }
+
+                const openKeyBtn = e.target.closest(".gemini-open-key-btn") || e.target.closest(".chatgpt-open-key-btn");
+                if (openKeyBtn) {
+                    if (chatgptKeyBtn) chatgptKeyBtn.click();
+                    else if (geminiKeyBtn) geminiKeyBtn.click();
+                    return;
+                }
+
+                const inlineSaveBtn = e.target.closest("#inline-chatgpt-key-save-btn");
+                if (inlineSaveBtn) {
+                    const inputEl = document.getElementById("inline-chatgpt-key-input");
+                    if (inputEl && inputEl.value.trim()) {
+                        const keyVal = inputEl.value.trim();
+                        localStorage.setItem("akera_openai_api_key", keyVal);
+                        updateChatGptKeyUi();
+                        fetch("/api/chatgpt-key", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ apiKey: keyVal })
+                        }).catch(() => {});
+                        CyberAudio.playSafeVerdict();
+                        appendBotMessage(`
+                            <div class="akera-agent-tag chatgpt-tag"><span>AKERA // KEY CONNECTED</span></div>
+                            <p><strong>✅ Key saved!</strong> Akera cognition active. Standing by for your commands!</p>
+                            ${getFollowUpHtml()}
+                        `);
+                        AkeraVoice.speak("Cognition engine connected. Standing by for your commands.", false);
+                    }
+                    return;
+                }
+
+                const cmdItem = e.target.closest(".cmd-item");
+                if (cmdItem) {
+                    const query = cmdItem.getAttribute("data-query");
+                    if (query) {
+                        if (chatInput) chatInput.value = query;
+                        processUserQuery(query);
+                        return;
+                    }
+                }
+
+                const chip = e.target.closest(".ai-sugg-chip");
+                if (chip) {
+                    const query = chip.getAttribute("data-query");
+                    if (query) {
+                        if (chatInput) chatInput.value = query;
+                        processUserQuery(query);
+                        return;
+                    }
+                }
+            });
+        }
+
+        // ------------------------------------------------------------------
+        // OPENAI CHATGPT COGNITION ENGINE CONFIGURATION & HELPERS
+        // ------------------------------------------------------------------
+        const chatgptKeyBtn = document.getElementById("ai-chatgpt-key-btn") || document.getElementById("ai-gemini-key-btn");
+        const chatgptModal = document.getElementById("ai-chatgpt-modal") || document.getElementById("ai-gemini-modal");
+        const chatgptModalClose = document.getElementById("chatgpt-modal-close") || document.getElementById("gemini-modal-close");
+        const chatgptKeyInput = document.getElementById("chatgpt-api-key-input") || document.getElementById("gemini-api-key-input");
+        const chatgptKeySaveBtn = document.getElementById("chatgpt-api-key-save-btn") || document.getElementById("gemini-api-key-save-btn");
+        const chatgptKeyStatus = document.getElementById("chatgpt-key-status") || document.getElementById("gemini-key-status");
+        // Backwards compatibility alias
+        const geminiKeyBtn = chatgptKeyBtn;
+
+        function updateChatGptKeyUi() {
+            const savedKey = localStorage.getItem("akera_openai_api_key") || "";
+            if (chatgptKeyInput) chatgptKeyInput.value = savedKey;
+            if (savedKey) {
+                if (chatgptKeyBtn) chatgptKeyBtn.classList.add("has-key");
+                if (chatgptKeyStatus) {
+                    chatgptKeyStatus.textContent = "Status: ✅ Key Active (OpenAI ChatGPT Connected)";
+                    chatgptKeyStatus.classList.add("active");
+                }
+            } else {
+                if (chatgptKeyBtn) chatgptKeyBtn.classList.remove("has-key");
+                if (chatgptKeyStatus) {
+                    chatgptKeyStatus.textContent = "Status: No key saved (Click to add key)";
+                    chatgptKeyStatus.classList.remove("active");
                 }
             }
-        });
+        }
 
-        chatForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (!text) return;
-            processUserQuery(text);
-        });
+        updateChatGptKeyUi();
+
+        if (chatgptKeyBtn && chatgptModal) {
+            chatgptKeyBtn.addEventListener("click", () => {
+                chatgptModal.classList.toggle("hidden");
+                updateChatGptKeyUi();
+                if (!chatgptModal.classList.contains("hidden") && chatgptKeyInput) {
+                    setTimeout(() => chatgptKeyInput.focus(), 100);
+                }
+            });
+        }
+
+        if (chatgptModalClose && chatgptModal) {
+            chatgptModalClose.addEventListener("click", () => {
+                chatgptModal.classList.add("hidden");
+            });
+        }
+
+        if (chatgptKeySaveBtn && chatgptKeyInput) {
+            chatgptKeySaveBtn.addEventListener("click", async () => {
+                const val = chatgptKeyInput.value.trim();
+                if (!val) {
+                    localStorage.removeItem("akera_openai_api_key");
+                    updateChatGptKeyUi();
+                    CyberAudio.playClick(900);
+                    if (chatgptModal) chatgptModal.classList.add("hidden");
+                    appendBotMessage(`
+                        <div class="akera-agent-tag chatgpt-tag"><span>AKERA // CHATGPT CONFIG</span></div>
+                        <p>Key removed. Akera switched to local security protocols and knowledge base.</p>
+                        ${getFollowUpHtml()}
+                    `);
+                    return;
+                }
+
+                chatgptKeySaveBtn.disabled = true;
+                chatgptKeySaveBtn.textContent = "Connecting...";
+                if (chatgptKeyStatus) {
+                    chatgptKeyStatus.textContent = "Status: ⏳ Verifying key with OpenAI ChatGPT...";
+                    chatgptKeyStatus.className = "gemini-key-status";
+                }
+
+                // Persist to server environment
+                fetch("/api/chatgpt-key", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ apiKey: val })
+                }).catch(() => {});
+
+                try {
+                    // Test key with light ping
+                    const testRes = await fetch("https://api.openai.com/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${val}`
+                        },
+                        body: JSON.stringify({
+                            model: "gpt-4o-mini",
+                            messages: [{ role: "user", content: "ping" }],
+                            max_tokens: 5
+                        })
+                    });
+
+                    if (testRes.ok) {
+                        localStorage.setItem("akera_openai_api_key", val);
+                        updateChatGptKeyUi();
+                        CyberAudio.playSafeVerdict();
+                        if (chatgptModal) chatgptModal.classList.add("hidden");
+                        appendBotMessage(`
+                            <div class="akera-agent-tag chatgpt-tag"><span>AKERA // COGNITION ACTIVE</span></div>
+                            <p><strong>✅ Cognition active!</strong></p>
+                            <p>Akera is ready. You can speak or type any question or cybersecurity command in real time!</p>
+                            ${getFollowUpHtml()}
+                        `);
+                        AkeraVoice.speak("Cognition engine connected. Standing by for your commands.", false);
+                    } else {
+                        const errData = await testRes.json().catch(() => null);
+                        const msg = errData?.error?.message || `HTTP ${testRes.status}`;
+                        if (chatgptKeyStatus) {
+                            chatgptKeyStatus.textContent = `Status: ❌ ${msg}`;
+                            chatgptKeyStatus.className = "gemini-key-status text-danger";
+                        }
+                        // Still save key in case it was a regional or quota restriction that backend can retry
+                        localStorage.setItem("akera_openai_api_key", val);
+                        updateChatGptKeyUi();
+                    }
+                } catch (netErr) {
+                    // Save locally and let backend try
+                    localStorage.setItem("akera_openai_api_key", val);
+                    updateChatGptKeyUi();
+                    if (chatgptModal) chatgptModal.classList.add("hidden");
+                } finally {
+                    chatgptKeySaveBtn.disabled = false;
+                    chatgptKeySaveBtn.textContent = "Save";
+                }
+            });
+        }
+
+        function formatAiText(text) {
+            if (!text) return "";
+            let clean = escapeHtml(text);
+            clean = clean.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            clean = clean.replace(/\*(.*?)\*/g, "<em>$1</em>");
+            clean = clean.replace(/`([^`]+)`/g, "<code>$1</code>");
+            const lines = clean.split("\n");
+            let inList = false;
+            let html = "";
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+                    if (!inList) { html += "<ul>"; inList = true; }
+                    html += `<li>${trimmed.substring(2)}</li>`;
+                } else if (/^\d+\.\s/.test(trimmed)) {
+                    if (!inList) { html += "<ol>"; inList = true; }
+                    html += `<li>${trimmed.replace(/^\d+\.\s/, "")}</li>`;
+                } else {
+                    if (inList) { html += "</ul>"; inList = false; }
+                    if (trimmed) html += `<p>${trimmed}</p>`;
+                }
+            }
+            if (inList) html += "</ul>";
+            return html;
+        }
+
+        async function fetchChatGptAnswer(query) {
+            let savedKey = (localStorage.getItem("akera_openai_api_key") || "").trim();
+
+            // 1. Primary: Server endpoint (/api/chat) with OpenAI support
+            try {
+                const res = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: query, apiKey: savedKey })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.status === "success" && data.response) {
+                        return { text: data.response, source: "chatgpt", model: data.model || "gpt-4o-mini" };
+                    }
+                    if (data && data.apiKey && !savedKey) {
+                        savedKey = data.apiKey;
+                        localStorage.setItem("akera_openai_api_key", data.apiKey);
+                    }
+                    if (data && data.status === "error") {
+                        const errMsg = (data.message || "").toLowerCase();
+                        const isNetError = errMsg.includes("errno 8") ||
+                                           errMsg.includes("nodename nor servname") ||
+                                           errMsg.includes("not known") ||
+                                           errMsg.includes("unreachable") ||
+                                           errMsg.includes("timed out");
+                        if (!isNetError) {
+                            return { text: null, source: "chatgpt_error", error: data.message };
+                        }
+                        console.info("Server cannot reach OpenAI directly. Attempting client-side fetch from browser...");
+                    }
+                }
+            } catch (e) {
+                console.warn("Server chat endpoint fetch error:", e);
+            }
+
+            // 2. Direct OpenAI API client call from the user's browser (bypasses server sandbox & DNS issues)
+            let activeKey = savedKey || (localStorage.getItem("akera_openai_api_key") || "").trim();
+            if (activeKey) {
+                const models = ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"];
+                let lastError = "";
+
+                for (const model of models) {
+                    try {
+                        const openAiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${activeKey}`
+                            },
+                            body: JSON.stringify({
+                                model: model,
+                                messages: [
+                                    {
+                                        role: "system",
+                                        content: "You are Akera, an intelligent AI Security Copilot and Voice Assistant for PhishGuard AI. You are authoritative, highly intelligent, friendly, and concise. Always keep answers brief, crisp, and natural for voice synthesis (2 to 4 clear sentences or short punchy bullet points). Never produce massive essay walls of markdown that sound robotic or tedious when read aloud. You can answer any cybersecurity question, general question, technical command, or user inquiry. When discussing phishing or URL safety, reference PhishGuard's real-time in-memory scanner. Stay in character as Akera."
+                                    },
+                                    {
+                                        role: "user",
+                                        content: query
+                                    }
+                                ],
+                                temperature: 0.7,
+                                max_tokens: 380
+                            })
+                        });
+
+                        if (openAiRes.ok) {
+                            const data = await openAiRes.json();
+                            const reply = data.choices?.[0]?.message?.content?.trim();
+                            if (reply) {
+                                return { text: reply, source: "chatgpt", model: model };
+                            }
+                        } else {
+                            const errData = await openAiRes.json().catch(() => null);
+                            const errMsg = errData?.error?.message || `HTTP ${openAiRes.status}`;
+                            lastError = errMsg;
+                            if (openAiRes.status === 401 || openAiRes.status === 403) {
+                                break;
+                            }
+                        }
+                    } catch (err) {
+                        lastError = err.message || "Network request failed";
+                    }
+                }
+
+                if (lastError) {
+                    return { text: null, source: "offline_fallback", error: lastError };
+                }
+            }
+
+            // 3. If no key is configured anywhere
+            return { text: null, source: "needs_key" };
+        }
+
+        if (chatForm) {
+            chatForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const text = chatInput ? chatInput.value.trim() : "";
+                if (!text) return;
+                processUserQuery(text);
+            });
+        }
 
         async function processUserQuery(query) {
-            chatInput.value = "";
+            if (chatInput) chatInput.value = "";
             CyberAudio.unlock();
             CyberAudio.playClick(920);
             appendUserMessage(query);
 
             const removeTyping = showTyping();
+            const rawLower = query.toLowerCase().trim();
 
-            // Check if query contains a URL
+            // 1. Direct System Commands
+            if (rawLower === "clear chat" || rawLower === "clear" || rawLower === "clear messages") {
+                removeTyping();
+                if (clearBtn) clearBtn.click();
+                AkeraVoice.speak("Session memory purged. Akera neural core re-initialized.");
+                return;
+            }
+
+            if (rawLower === "mute" || rawLower === "mute voice" || rawLower === "turn off voice") {
+                removeTyping();
+                AkeraVoice.speechEnabled = false;
+                AkeraVoice.stopSpeaking();
+                if (voiceToggleBtn) {
+                    voiceToggleBtn.classList.add("muted");
+                    voiceToggleBtn.title = "Voice Audio Muted (Click to unmute)";
+                }
+                appendBotMessage(`
+                    <div class="akera-agent-tag"><span>AKERA // AUDIO</span></div>
+                    <p><strong>Voice synthesis muted.</strong> Akera speech output is now silenced.</p>
+                    ${getFollowUpHtml()}
+                `);
+                return;
+            }
+
+            if (rawLower === "unmute" || rawLower === "unmute voice" || rawLower === "turn on voice") {
+                removeTyping();
+                AkeraVoice.speechEnabled = true;
+                if (voiceToggleBtn) {
+                    voiceToggleBtn.classList.remove("muted");
+                    voiceToggleBtn.title = "Voice Audio Output Active (Click to mute)";
+                }
+                appendBotMessage(`
+                    <div class="akera-agent-tag"><span>AKERA // AUDIO</span></div>
+                    <p><strong>Voice synthesis unmuted.</strong> Akera speech output is now active.</p>
+                    ${getFollowUpHtml()}
+                `);
+                AkeraVoice.speak("Voice output enabled. I am listening.");
+                return;
+            }
+
+            // 2. Hindi / Hinglish Greetings & Casual Queries ("kaisi ho", "kaise ho", "kya haal hai", etc.)
+            const isHindiGreeting = /(kaisi ho|kaise ho|kya haal|kaisa hai|kya hal|aap kaise|tum kaise|namaste|kem cho|kya chal raha|theek ho|sab theek)/i.test(rawLower);
+            if (isHindiGreeting) {
+                removeTyping();
+                appendBotMessage(`
+                    <div class="akera-agent-tag"><span>AKERA // COPILOT</span></div>
+                    <p><strong>Main bilkul theek hoon! How are you? How can I help you today?</strong></p>
+                    ${getFollowUpHtml()}
+                `);
+                CyberAudio.playClick(1000);
+                openVoiceOverlay();
+                setVoiceOverlayState("SPEAKING", 'Main bilkul theek hoon! How are you? How can I help you today?');
+                AkeraVoice.speakPhrases(["Main theek hoon! How are you?", "How can I help you today?"], 600, false);
+                return;
+            }
+
+            // 2. Check if query contains a URL to inspect
             const urlMatch = query.match(/(https?:\/\/[^\s]+)|((?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?)/i);
 
             if (urlMatch) {
@@ -2054,134 +3268,507 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                             ${indicatorsHtml}
                             <p><em>${isPhish ? '⚠️ High risk of credential harvesting or payload delivery. Avoid visiting or supplying authentication data.' : '✅ Lexical features match verified benign structural patterns.'}</em></p>
+                            ${getFollowUpHtml()}
                         `);
 
                         // Synchronize main page input
                         if (urlInput) {
                             urlInput.value = candidateUrl;
                         }
+
+                        // Speak voice threat verdict, pause, and ask follow-up aloud!
+                        const spokenUrlVerdict = isPhish 
+                            ? "Warning: High-risk phishing detected. This link poses a threat of credential harvesting." 
+                            : "Threat analysis complete: Lexical features match verified benign patterns. This URL appears safe.";
+                        AkeraVoice.speak(spokenUrlVerdict, true);
+
                         return;
                     }
                 } catch (err) {}
             }
 
-            // Fallback to Knowledge Base / Pre-prompt Router
-            setTimeout(() => {
+            // 3. Greeting "Hi Akera" -> Natural Pause + AUTO-ACTIVATE VOICE MODE
+            const isHiAkera = /^(hi|hey|hello|yo|greetings|hola)\b/i.test(rawLower) || 
+                              rawLower.includes("hi akera") || 
+                              rawLower.includes("hey akera") || 
+                              rawLower.includes("hello akera") ||
+                              rawLower.includes("hi akerra") ||
+                              rawLower.includes("hi akira") ||
+                              (rawLower.includes("akera") && (rawLower.includes("hi") || rawLower.includes("hey") || rawLower.includes("hello") || rawLower.includes("how are you") || rawLower.includes("help")));
+
+            if (isHiAkera) {
                 removeTyping();
-                const reply = generateAiResponse(query);
-                appendBotMessage(reply);
+                appendBotMessage(`
+                    <div class="akera-agent-tag"><span>AKERA // VOICE COPILOT</span></div>
+                    <p><strong>Hi! How are you? How can I help you?</strong></p>
+                    <p>🎙️ <em>Voice mode automatically activated. Listening for your command or question...</em></p>
+                    ${getPrePromptsHtml()}
+                `);
                 CyberAudio.playClick(1000);
-            }, 420);
+                openVoiceOverlay();
+                setVoiceOverlayState("SPEAKING", 'Hi! How are you? How can I help you?');
+                AkeraVoice.speakPhrases(["Hi, how are you?", "How can I help you?"], 600, false);
+                return;
+            }
+
+            // 4. Query OpenAI ChatGPT AI for whatever command, question, or task the user requested!
+            try {
+                const chatgptData = await fetchChatGptAnswer(query);
+
+                removeTyping();
+
+                if (chatgptData && chatgptData.text) {
+                    const formattedHtml = formatAiText(chatgptData.text);
+                    const isOffline = chatgptData.source === "offline_neural_core";
+                    const tagTitle = isOffline ? "AKERA // OFFLINE NEURAL CORE" : "AKERA // CHATGPT COGNITION";
+                    const tagClass = isOffline ? "offline-tag" : "chatgpt-tag";
+                    appendBotMessage(`
+                        <div class="akera-agent-tag ${tagClass}"><span>${tagTitle}</span></div>
+                        <div class="chatgpt-response-text">${formattedHtml}</div>
+                        ${getFollowUpHtml()}
+                    `);
+                    CyberAudio.playClick(1000);
+                    setVoiceOverlayState("SPEAKING", `<div class="voice-chatgpt-response">${formattedHtml}</div>`);
+                    // Speak exact ChatGPT / Neural Core response aloud
+                    AkeraVoice.speak(chatgptData.text, true);
+                    return;
+                }
+
+                // If fallback is needed
+                const replyObj = generateAiResponse(query);
+                const replyHtml = typeof replyObj === "string" ? replyObj : replyObj.text;
+                const spokenPhrases = typeof replyObj === "object" && replyObj.spokenPhrases ? replyObj.spokenPhrases : null;
+                const spokenText = typeof replyObj === "object" && replyObj.spoken ? replyObj.spoken : null;
+
+                appendBotMessage(replyHtml);
+                CyberAudio.playClick(1000);
+
+                const voiceSummary = spokenText || (spokenPhrases ? spokenPhrases.join(" ") : "Analyzing security protocol.");
+                setVoiceOverlayState("SPEAKING", `<span class="voice-spoken-active">${escapeHtml(voiceSummary)}</span>`);
+
+                if (spokenPhrases) {
+                    AkeraVoice.speakPhrases(spokenPhrases, replyObj.pauseMs || 550, replyObj.askFollowUp || false);
+                } else if (spokenText) {
+                    AkeraVoice.speak(spokenText, replyObj.askFollowUp !== false);
+                }
+                return;
+            } catch (err) {
+                removeTyping();
+                console.error("AI response error:", err);
+            }
         }
 
         function generateAiResponse(text) {
             const q = text.toLowerCase().trim();
 
-            // 1. GREETINGS (hi, hello, hey, etc.)
-            const greetingWords = ["hi", "hello", "hey", "heya", "greetings", "good morning", "good evening", "good afternoon", "hola", "sup"];
-            const isGreeting = greetingWords.some(g => q === g || q.startsWith(g + " ") || q.startsWith(g + "!") || q.startsWith(g + ",") || q.startsWith(g + "."));
-
-            if (isGreeting) {
-                return `
-                    <div class="akera-agent-tag"><span>AKERA // SINGULARITY ONLINE</span></div>
-                    <p><strong>Greetings, Operator.</strong> I am <strong>Akera</strong>, your cosmic threat intelligence copilot.</p>
-                    <p>I am online and ready. You can paste any link to run a zero-network threat analysis, or select one of the authorized security protocols below:</p>
-                    ${getPrePromptsHtml()}
-                `;
+            // 0. Hindi / Hinglish Greetings ("kaisi ho", "kaise ho", "kya haal hai", etc.)
+            const isHindiGreeting = /(kaisi ho|kaise ho|kya haal|kaisa hai|kya hal|aap kaise|tum kaise|namaste|kem cho|kya chal raha|theek ho|sab theek)/i.test(q);
+            if (isHindiGreeting) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // COPILOT</span></div>
+                        <p><strong>Main bilkul theek hoon! How are you? How can I help you today?</strong></p>
+                        ${getPrePromptsHtml()}
+                        ${getFollowUpHtml()}
+                    `,
+                    spokenPhrases: ["Main theek hoon! How are you?", "How can I help you today?"],
+                    pauseMs: 600,
+                    askFollowUp: true
+                };
             }
 
-            // 2. AUTHORIZED PRE-PROMPT: "Why is this website safe to use?"
+            // 1. "HI AKERA" & GREETINGS (User requirement: say "Hi, how are you", audible pause, then say "How can I help you")
+            const isHiAkera = /^(hi|hey|hello|yo|greetings|hola)\b/i.test(q) || 
+                              q.includes("hi akera") || 
+                              q.includes("hey akera") || 
+                              q.includes("hello akera") ||
+                              q.includes("hi akerra") ||
+                              q.includes("hi akira") ||
+                              (q.includes("akera") && (q.includes("hi") || q.includes("hey") || q.includes("hello") || q.includes("how are you") || q.includes("help")));
+
+            if (isHiAkera) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // VOICE COPILOT</span></div>
+                        <p><strong>Hi! How are you? How can I help you?</strong></p>
+                        <p>I am online and listening. You can speak or type any cybersecurity question, paste a link to verify its safety, or select an authorized command:</p>
+                        ${getPrePromptsHtml()}
+                    `,
+                    spokenPhrases: ["Hi, how are you?", "How can I help you?"],
+                    pauseMs: 600,
+                    askFollowUp: false
+                };
+            }
+
+            // 2. COMMAND DIRECTORY / HELP / MENU
+            if (q.includes("command") || q.includes("help") || q.includes("menu") || q === "list" || q.includes("what can you do") || q.includes("options")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // COMMAND DIRECTORY</span></div>
+                        <p><strong>⚡ Authorized Security & Assistant Commands:</strong></p>
+                        <div class="akera-cmd-card">
+                            <div class="cmd-category-title"><span>🔍</span> THREAT DETECTION & EXPLOITS</div>
+                            <div class="cmd-category-list">
+                                <div class="cmd-item" data-query="🎯 Sample URLs">
+                                    <span class="cmd-name">🎯 Sample URLs</span>
+                                    <span class="cmd-desc">Load benign, credential phish, and spoofed links</span>
+                                </div>
+                                <div class="cmd-item" data-query="Zero-Day Phishing">
+                                    <span class="cmd-name">🧬 Zero-Day Phishing</span>
+                                    <span class="cmd-desc">How structural heuristics block zero-hour scams</span>
+                                </div>
+                                <div class="cmd-item" data-query="Typosquatting Exploit">
+                                    <span class="cmd-name">🔡 Typosquatting Exploit</span>
+                                    <span class="cmd-desc">Lookalike characters & combosquatting vectors</span>
+                                </div>
+                            </div>
+
+                            <div class="cmd-category-title"><span>🧠</span> AI MODEL & INTELLIGENCE</div>
+                            <div class="cmd-category-list">
+                                <div class="cmd-item" data-query="Model Benchmark">
+                                    <span class="cmd-name">📊 Model Benchmark</span>
+                                    <span class="cmd-desc">Random Forest 96.8% accuracy, latency & metrics</span>
+                                </div>
+                                <div class="cmd-item" data-query="Features Analyzed">
+                                    <span class="cmd-name">🔬 Features Analyzed</span>
+                                    <span class="cmd-desc">Breakdown of 15 lexical/structural heuristics</span>
+                                </div>
+                                <div class="cmd-item" data-query="What is homograph and punycode spoofing?">
+                                    <span class="cmd-name">🕵️ Homograph & @ Spoofing</span>
+                                    <span class="cmd-desc">Cyrillic lookalikes & RFC @ redirect tricks</span>
+                                </div>
+                            </div>
+
+                            <div class="cmd-category-title"><span>🛡️</span> PROTOCOLS & RESPONSE</div>
+                            <div class="cmd-category-list">
+                                <div class="cmd-item" data-query="Why is this website safe to use?">
+                                    <span class="cmd-name">🛡️ Why Site is Safe</span>
+                                    <span class="cmd-desc">Air-gapped in-memory inspection security</span>
+                                </div>
+                                <div class="cmd-item" data-query="What is the use of PhishGuard?">
+                                    <span class="cmd-name">🎯 Use of PhishGuard</span>
+                                    <span class="cmd-desc">Core purpose, benefits & enterprise deployment</span>
+                                </div>
+                                <div class="cmd-item" data-query="What should I do if I clicked a phishing link?">
+                                    <span class="cmd-name">🚨 Incident Response</span>
+                                    <span class="cmd-desc">5-step emergency containment checklist</span>
+                                </div>
+                                <div class="cmd-item" data-query="Explain URL risk levels and confidence score">
+                                    <span class="cmd-name">📈 Risk Levels Guide</span>
+                                    <span class="cmd-desc">Low, Suspicious, Medium, and High score bands</span>
+                                </div>
+                            </div>
+
+                            <div class="cmd-category-title"><span>⚙️</span> SYSTEM CONTROLS</div>
+                            <div class="cmd-category-list">
+                                <div class="cmd-item" data-query="Clear Chat">
+                                    <span class="cmd-name">🧹 Clear Chat</span>
+                                    <span class="cmd-desc">Reset conversation log</span>
+                                </div>
+                                <div class="cmd-item" data-query="Mute Voice">
+                                    <span class="cmd-name">🔇 Mute Voice</span>
+                                    <span class="cmd-desc">Mute speech synthesis output</span>
+                                </div>
+                                <div class="cmd-item" data-query="Who is Akera">
+                                    <span class="cmd-name">🤖 Who is Akera</span>
+                                    <span class="cmd-desc">Neural Copilot background & role</span>
+                                </div>
+                            </div>
+                        </div>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "Here is the directory of authorized commands. You can click any command item or speak your request.",
+                    askFollowUp: true
+                };
+            }
+
+            // 3. SAMPLE URLS COMMAND (Interactive 1-Click Test Links)
+            if (q.includes("sample url") || q.includes("test link") || q.includes("test url") || q.includes("example url")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // TEST VECTORS</span></div>
+                        <p><strong>🎯 Interactive Sample URL Vectors:</strong></p>
+                        <p>Click any link below to automatically inject and run a full heuristic threat scan:</p>
+                        <div class="akera-cmd-card">
+                            <div class="cmd-category-list">
+                                <div class="cmd-item" data-query="https://www.google.com">
+                                    <div>
+                                        <span class="cmd-name" style="color: #4ade80;">🟢 Legitimate / Benign</span>
+                                        <div style="font-family: monospace; font-size: 0.7rem; color: #cbd5e1; margin-top:2px;">https://www.google.com</div>
+                                    </div>
+                                    <span class="cmd-desc">Expected root hierarchy</span>
+                                </div>
+                                <div class="cmd-item" data-query="http://paypal-security-update.account-verification.com/login.php">
+                                    <div>
+                                        <span class="cmd-name" style="color: #f87171;">🔴 Phishing / Token Stuffing</span>
+                                        <div style="font-family: monospace; font-size: 0.7rem; color: #cbd5e1; margin-top:2px;">http://paypal-security-update.account-verification.com/login.php</div>
+                                    </div>
+                                    <span class="cmd-desc">Subdomain spoof lure</span>
+                                </div>
+                                <div class="cmd-item" data-query="http://apple.com@evil-phish-domain.ru/auth">
+                                    <div>
+                                        <span class="cmd-name" style="color: #fbbf24;">⚠️ Redirection Obfuscation</span>
+                                        <div style="font-family: monospace; font-size: 0.7rem; color: #cbd5e1; margin-top:2px;">http://apple.com@evil-phish-domain.ru/auth</div>
+                                    </div>
+                                    <span class="cmd-desc">RFC @ symbol exploit</span>
+                                </div>
+                            </div>
+                        </div>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "I have prepared sample links covering safe, phishing, and redirect vectors. Click any item to run the analysis.",
+                    askFollowUp: true
+                };
+            }
+
+            // 4. MODEL BENCHMARK / ML STATS COMMAND
+            if (q.includes("benchmark") || q.includes("accuracy") || q.includes("model stat") || q.includes("algorithm") || q.includes("random forest")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // BENCHMARK MATRIX</span></div>
+                        <p><strong>📊 Machine Learning Performance Metrics:</strong></p>
+                        <div class="akera-cmd-card">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <div style="background: rgba(56, 189, 248, 0.08); padding: 0.45rem; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2);">
+                                    <div style="font-size: 0.62rem; color: #7dd3fc; font-weight: 700;">ACCURACY</div>
+                                    <div style="font-size: 1.1rem; color: #38bdf8; font-weight: 800;">96.8%</div>
+                                </div>
+                                <div style="background: rgba(74, 222, 128, 0.08); padding: 0.45rem; border-radius: 6px; border: 1px solid rgba(74, 222, 128, 0.2);">
+                                    <div style="font-size: 0.62rem; color: #86efac; font-weight: 700;">INFERENCE SPEED</div>
+                                    <div style="font-size: 1.1rem; color: #4ade80; font-weight: 800;">~18 ms</div>
+                                </div>
+                                <div style="background: rgba(168, 85, 247, 0.08); padding: 0.45rem; border-radius: 6px; border: 1px solid rgba(168, 85, 247, 0.2);">
+                                    <div style="font-size: 0.62rem; color: #d8b4fe; font-weight: 700;">MODEL ENSEMBLE</div>
+                                    <div style="font-size: 0.8rem; color: #c084fc; font-weight: 700; margin-top: 3px;">Random Forest + XGB</div>
+                                </div>
+                                <div style="background: rgba(251, 191, 36, 0.08); padding: 0.45rem; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2);">
+                                    <div style="font-size: 0.62rem; color: #fde68a; font-weight: 700;">FALSE POSITIVE</div>
+                                    <div style="font-size: 1.1rem; color: #fbbf24; font-weight: 800;">&lt; 1.2%</div>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.72rem; color: #94a3b8; margin: 0;">Trained on 10,000+ validated phishing and legitimate URLs aggregated from PhishTank, OpenPhish, and the Alexa Top 1M database.</p>
+                        </div>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "Our Random Forest ensemble achieves ninety-six point eight percent accuracy with eighteen millisecond inference latency.",
+                    askFollowUp: true
+                };
+            }
+
+            // 5. FEATURES ANALYZED COMMAND
+            if (q.includes("feature") || q.includes("indicator") || q.includes("heuristic")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // HEURISTIC MATRIX</span></div>
+                        <p><strong>🔬 15 Structural & Lexical Feature Dimensions:</strong></p>
+                        <ul style="margin: 0.35rem 0 0.55rem 1.15rem; padding: 0; font-size: 0.74rem;">
+                            <li><strong>Structural Dimensions:</strong> URL length, domain length, directory slash depth, token entropy.</li>
+                            <li><strong>Deceptive Obfuscations:</strong> <code>@</code> symbol redirect trick, raw IPv4 address host, double slash <code>//</code> path stuffing.</li>
+                            <li><strong>Lexical Markers:</strong> Subdomain depth count, hyphen density, digit ratio in hostname.</li>
+                            <li><strong>Credential Harvesting Lures:</strong> Keywords matching <code>login</code>, <code>verify</code>, <code>secure</code>, <code>banking</code>, <code>update</code>.</li>
+                            <li><strong>TLD Reputation:</strong> Abnormal or high-abuse top-level domains.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "PhishGuard evaluates fifteen structural dimensions including token length, host IP addresses, redirect symbols, and sensitive keywords.",
+                    askFollowUp: true
+                };
+            }
+
+            // 6. TYPOSQUATTING & COMBOSQUATTING EXPLOITS
+            if (q.includes("typo") || q.includes("combosquat") || q.includes("cousin domain")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // THREAT INTEL</span></div>
+                        <p><strong>🔡 Typosquatting & Combosquatting Explained:</strong></p>
+                        <ul>
+                            <li><strong>Typosquatting:</strong> Attackers register common typographical errors of trusted brand domains (e.g. <code>g00gle.com</code> or <code>amzon.com</code>) hoping users make typing errors.</li>
+                            <li><strong>Combosquatting:</strong> Legitimate brand names combined with deceptive security keywords (e.g. <code>paypal-verification-portal.com</code> or <code>apple-support-unlock.net</code>).</li>
+                            <li><strong>How PhishGuard Blocks It:</strong> Our token segmentation heuristic separates compound words and detects unauthorized brand tokens outside the authentic root domain.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "Typosquatting relies on deceptive lookalike domains and spelling mistakes to trick victims into counterfeit portals.",
+                    askFollowUp: true
+                };
+            }
+
+            // 7. ZERO-DAY PHISHING EXPLOIT
+            if (q.includes("zero-day") || q.includes("zero day") || q.includes("zero hour")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // DEFENSE ARCHITECTURE</span></div>
+                        <p><strong>🧬 Zero-Day Phishing Prevention:</strong></p>
+                        <ul>
+                            <li><strong>The Blocklist Delay Problem:</strong> Traditional security tools rely on blacklists (like Google Safe Browsing), which take hours or days to register a newly launched scam domain.</li>
+                            <li><strong>Inherent Structural DNA:</strong> PhishGuard inspects the intrinsic lexical, structural, and obfuscation properties of the link rather than its historical reputation.</li>
+                            <li><strong>Instant 20ms Protection:</strong> Zero-hour links are classified and blocked immediately upon first encounter—no waiting for blocklist propagation.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "Zero-day phishing protection detects brand-new malicious links by analyzing their inherent structural patterns rather than waiting for blacklists.",
+                    askFollowUp: true
+                };
+            }
+
+            // 8. WHO IS AKERA COMMAND
+            if (q.includes("who is akera") || q.includes("who are you") || q.includes("about akera") || q.includes("your name")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // IDENTITY</span></div>
+                        <p><strong>🤖 I am Akera — Neural Cyber Copilot for PhishGuard AI:</strong></p>
+                        <p>My core directives are:</p>
+                        <ul>
+                            <li><strong>Voice & Conversational Guidance:</strong> Answer cybersecurity questions, explain threat indicators, and listen to speech input.</li>
+                            <li><strong>Real-Time Threat Assessment:</strong> Analyze URLs against 15 machine learning heuristic dimensions.</li>
+                            <li><strong>Explainable Security (XAI):</strong> Translate raw mathematical probabilities into clear, actionable incident response recommendations.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "I am Akera, your Neural Security Copilot. I analyze threat vectors, explain URL heuristics, and guide your digital defense.",
+                    askFollowUp: true
+                };
+            }
+
+            // 9. THANK YOU & POLITE ACKNOWLEDGMENT
+            if (q.includes("thank") || q.includes("thanks") || q.includes("great job") || q.includes("awesome")) {
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // ACKNOWLEDGE</span></div>
+                        <p><strong>You are very welcome!</strong> Standing by to protect your browsing sessions. Let me know if you need anything else verified.</p>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "You are very welcome. I am always on standby to protect your digital browsing.",
+                    askFollowUp: true
+                };
+            }
+
+            // 10. PROTOCOL-01: "Why is this website safe to use?"
             if (q.includes("why is this website safe") || q.includes("why this website is safe") || q.includes("is this website safe") || q.includes("why safe") || q.includes("safe to use") || q.includes("is it safe") || q.includes("privacy")) {
-                return `
-                    <div class="akera-agent-tag"><span>AKERA // PROTOCOL-01</span></div>
-                    <p><strong>🛡️ Why PhishGuard is 100% Safe to Use:</strong></p>
-                    <ul>
-                        <li><strong>Zero-Network In-Memory Execution (Air-Gapped):</strong> PhishGuard inspects URLs strictly by parsing text characters in memory. It <strong>never navigates to, connects to, or downloads content</strong> from the target link. You cannot be infected by malware, drive-by scripts, or tracking beacons.</li>
-                        <li><strong>Absolute Privacy:</strong> All inspections occur locally on the server. Your queries are never saved, tracked, shared with ad brokers, or sent to external cloud APIs.</li>
-                        <li><strong>Safe Verification Criteria:</strong> When PhishGuard flags a URL as <em>Legitimate (Safe)</em>, it has verified standard domain structure, authentic root domain hierarchy, expected TLD registration, and absence of deceptive token patterns.</li>
-                    </ul>
-                `;
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // PROTOCOL-01</span></div>
+                        <p><strong>🛡️ Why PhishGuard is 100% Safe to Use:</strong></p>
+                        <ul>
+                            <li><strong>Zero-Network In-Memory Execution (Air-Gapped):</strong> PhishGuard inspects URLs strictly by parsing text characters in memory. It <strong>never navigates to, connects to, or downloads content</strong> from the target link. You cannot be infected by malware, drive-by scripts, or tracking beacons.</li>
+                            <li><strong>Absolute Privacy:</strong> All inspections occur locally on the server. Your queries are never saved, tracked, shared with ad brokers, or sent to external cloud APIs.</li>
+                            <li><strong>Safe Verification Criteria:</strong> When PhishGuard flags a URL as <em>Legitimate (Safe)</em>, it has verified standard domain structure, authentic root domain hierarchy, expected TLD registration, and absence of deceptive token patterns.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "PhishGuard is completely safe to use because it inspects URL tokens strictly in memory with zero network exposure.",
+                    askFollowUp: true
+                };
             }
 
-            // 3. AUTHORIZED PRE-PROMPT: "What is the use of PhishGuard?"
+            // 11. PROTOCOL-02: "What is the use of PhishGuard?"
             if (q.includes("use of phishguard") || q.includes("what is the use of phishguard") || q.includes("what is phishguard") || q.includes("purpose of phishguard") || q.includes("why use phishguard") || q.includes("why phishguard") || q.includes("why do we need") || q.includes("what does phishguard do")) {
-                return `
-                    <div class="akera-agent-tag"><span>AKERA // PROTOCOL-02</span></div>
-                    <p><strong>🎯 What is the Use of PhishGuard AI?</strong></p>
-                    <p>PhishGuard is an automated, real-time threat intelligence platform designed to protect users and enterprise networks from phishing, spoofed login portals, and credential harvesting.</p>
-                    <ul>
-                        <li><strong>Stops Zero-Day Attacks:</strong> Traditional blocklists (like DNS blacklists or browser warnings) take hours or days to identify new scams. PhishGuard analyzes the <em>inherent structural DNA</em> of the link in real time (~20ms), blocking brand-new zero-hour malicious links instantly.</li>
-                        <li><strong>Pre-Click Protection:</strong> Inspect links from suspicious SMS messages, phishing emails, or social media <em>before</em> clicking them.</li>
-                        <li><strong>Explainable Security (XAI):</strong> Beyond a simple safe/unsafe label, PhishGuard provides actionable reasons (e.g. "@ symbol trick", "raw IP address host", "homograph spoofing") so security analysts and users understand the exact threat mechanism.</li>
-                        <li><strong>Offline & Enterprise Ready:</strong> Operates without third-party API dependencies and can be integrated into corporate mail gateways, browser extensions, or SOC SIEM workflows.</li>
-                    </ul>
-                `;
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // PROTOCOL-02</span></div>
+                        <p><strong>🎯 What is the Use of PhishGuard AI?</strong></p>
+                        <p>PhishGuard is an automated, real-time threat intelligence platform designed to protect users and enterprise networks from phishing, spoofed login portals, and credential harvesting.</p>
+                        <ul>
+                            <li><strong>Stops Zero-Day Attacks:</strong> Traditional blocklists take hours or days to identify new scams. PhishGuard analyzes the <em>inherent structural DNA</em> of the link in real time (~20ms), blocking brand-new zero-hour malicious links instantly.</li>
+                            <li><strong>Pre-Click Protection:</strong> Inspect links from suspicious SMS messages, phishing emails, or social media <em>before</em> clicking them.</li>
+                            <li><strong>Explainable Security (XAI):</strong> Beyond a simple safe/unsafe label, PhishGuard provides actionable reasons (e.g. "@ symbol trick", "raw IP address host", "homograph spoofing") so security analysts and users understand the exact threat mechanism.</li>
+                            <li><strong>Offline & Enterprise Ready:</strong> Operates without third-party API dependencies and can be integrated into corporate mail gateways, browser extensions, or SOC SIEM workflows.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "PhishGuard is an automated threat intelligence platform that analyzes link structure to block zero-day phishing before your browser connects.",
+                    askFollowUp: true
+                };
             }
 
-            // 4. AUTHORIZED PRE-PROMPT: "How does PhishGuard detect phishing links?"
+            // 12. PROTOCOL-03: "How does PhishGuard detect phishing links?"
             if (q.includes("how does") || q.includes("detection work") || q.includes("detect phishing") || q.includes("how do you detect")) {
-                return `
-                    <div class="akera-agent-tag"><span>AKERA // PROTOCOL-03</span></div>
-                    <p><strong>How PhishGuard AI Detects Phishing:</strong></p>
-                    <p>PhishGuard extracts <strong>15 lexical and structural features</strong> from URL strings in memory without ever navigating to the website (zero network exposure).</p>
-                    <ul>
-                        <li><strong>Structural Analysis:</strong> Token length, directory slash depth, and subdomain count.</li>
-                        <li><strong>Obfuscation Detection:</strong> @ symbol tricks, raw IPv4 address hosts, and excessive hyphens.</li>
-                        <li><strong>Machine Learning:</strong> Trained on over 10,000 URLs with Random Forest & XGBoost, achieving <strong>96.8% accuracy</strong>.</li>
-                    </ul>
-                `;
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // PROTOCOL-03</span></div>
+                        <p><strong>How PhishGuard AI Detects Phishing:</strong></p>
+                        <p>PhishGuard extracts <strong>15 lexical and structural features</strong> from URL strings in memory without ever navigating to the website (zero network exposure).</p>
+                        <ul>
+                            <li><strong>Structural Analysis:</strong> Token length, directory slash depth, and subdomain count.</li>
+                            <li><strong>Obfuscation Detection:</strong> @ symbol tricks, raw IPv4 address hosts, and excessive hyphens.</li>
+                            <li><strong>Machine Learning:</strong> Trained on over 10,000 URLs with Random Forest & XGBoost, achieving <strong>96.8% accuracy</strong>.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "PhishGuard extracts fifteen lexical and structural features in memory to classify threats using machine learning with ninety-six point eight percent accuracy.",
+                    askFollowUp: true
+                };
             }
 
-            // 5. AUTHORIZED PRE-PROMPT: "What should I do if I clicked a phishing link?"
+            // 13. PROTOCOL-04: "What should I do if I clicked a phishing link?"
             if (q.includes("clicked") || q.includes("what should i do") || q.includes("compromised") || q.includes("hacked") || q.includes("bad link")) {
-                return `
-                    <div class="akera-agent-tag"><span>AKERA // PROTOCOL-04</span></div>
-                    <p><strong>🚨 Incident Response Steps:</strong></p>
-                    <ol style="margin: 0.35rem 0 0.55rem 1.15rem; padding: 0;">
-                        <li><strong>Disconnect:</strong> Unplug Ethernet or disconnect from Wi-Fi immediately.</li>
-                        <li><strong>Change Passwords:</strong> From another secure device, change passwords for affected accounts.</li>
-                        <li><strong>Enable MFA:</strong> Activate hardware keys or app-based 2-Factor Authentication.</li>
-                        <li><strong>Revoke Sessions:</strong> Log out of all active account sessions in security settings.</li>
-                        <li><strong>Scan Device:</strong> Run an updated anti-malware/EDR scan.</li>
-                    </ol>
-                `;
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // PROTOCOL-04</span></div>
+                        <p><strong>🚨 Incident Response Steps:</strong></p>
+                        <ol style="margin: 0.35rem 0 0.55rem 1.15rem; padding: 0;">
+                            <li><strong>Disconnect:</strong> Unplug Ethernet or disconnect from Wi-Fi immediately.</li>
+                            <li><strong>Change Passwords:</strong> From another secure device, change passwords for affected accounts.</li>
+                            <li><strong>Enable MFA:</strong> Activate hardware keys or app-based 2-Factor Authentication.</li>
+                            <li><strong>Revoke Sessions:</strong> Log out of all active account sessions in security settings.</li>
+                            <li><strong>Scan Device:</strong> Run an updated anti-malware/EDR scan.</li>
+                        </ol>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "If you clicked a phishing link, disconnect your network immediately and change your account passwords from a secure device.",
+                    askFollowUp: true
+                };
             }
 
-            // 6. AUTHORIZED PRE-PROMPT: "Explain URL risk levels and confidence score"
+            // 14. PROTOCOL-05: "Explain URL risk levels and confidence score"
             if (q.includes("risk") || q.includes("confidence") || q.includes("score")) {
-                return `
-                    <div class="akera-agent-tag"><span>AKERA // PROTOCOL-05</span></div>
-                    <p><strong>Understanding Risk Levels & Confidence:</strong></p>
-                    <ul>
-                        <li><strong>Low Risk / Safe (&lt;40%):</strong> Clean URL structure consistent with trusted domains.</li>
-                        <li><strong>Suspicious (40-60%):</strong> Borderline characteristics (e.g. long path or unusual TLD).</li>
-                        <li><strong>Medium Risk (60-80%):</strong> Multiple phishing indicators present.</li>
-                        <li><strong>High Risk (&gt;80%):</strong> Severe threat markers (IP host, token stuffing, spoofing patterns).</li>
-                    </ul>
-                `;
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // PROTOCOL-05</span></div>
+                        <p><strong>Understanding Risk Levels & Confidence:</strong></p>
+                        <ul>
+                            <li><strong>Low Risk / Safe (&lt;40%):</strong> Clean URL structure consistent with trusted domains.</li>
+                            <li><strong>Suspicious (40-60%):</strong> Borderline characteristics (e.g. long path or unusual TLD).</li>
+                            <li><strong>Medium Risk (60-80%):</strong> Multiple phishing indicators present.</li>
+                            <li><strong>High Risk (&gt;80%):</strong> Severe threat markers (IP host, token stuffing, spoofing patterns).</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "Risk levels range from Low Risk below forty percent to High Risk above eighty percent based on structural anomaly probability.",
+                    askFollowUp: true
+                };
             }
 
-            // 7. AUTHORIZED PRE-PROMPT: "What is homograph and punycode spoofing?"
+            // 15. PROTOCOL-06: "What is homograph and punycode spoofing?"
             if (q.includes("homograph") || q.includes("punycode") || q.includes("spoof") || q.includes("@") || q.includes("ip address") || q.includes("host")) {
-                return `
-                    <div class="akera-agent-tag"><span>AKERA // PROTOCOL-06</span></div>
-                    <p><strong>Homograph & URL Obfuscation Exploits:</strong></p>
-                    <ul>
-                        <li><strong>Homograph & Punycode:</strong> Attackers register Cyrillic lookalike letters (e.g. Cyrillic <code>а</code> instead of Latin <code>a</code>) where <code>pаypal.com</code> becomes <code>xn--pypal-43a.com</code>.</li>
-                        <li><strong>The @ Symbol Trick:</strong> In <code>http://google.com@evil.com</code>, standard RFC URLs ignore everything before the <code>@</code> and redirect to <code>evil.com</code>.</li>
-                        <li><strong>Direct IP Address:</strong> Attackers use raw IPs like <code>http://192.168.1.50/login</code> to bypass domain-based reputation filters.</li>
-                    </ul>
-                `;
+                return {
+                    text: `
+                        <div class="akera-agent-tag"><span>AKERA // PROTOCOL-06</span></div>
+                        <p><strong>Homograph & URL Obfuscation Exploits:</strong></p>
+                        <ul>
+                            <li><strong>Homograph & Punycode:</strong> Attackers register Cyrillic lookalike letters where <code>pаypal.com</code> becomes <code>xn--pypal-43a.com</code>.</li>
+                            <li><strong>The @ Symbol Trick:</strong> In <code>http://google.com@evil.com</code>, standard RFC URLs ignore everything before the <code>@</code> and redirect to <code>evil.com</code>.</li>
+                            <li><strong>Direct IP Address:</strong> Attackers use raw IPs like <code>http://192.168.1.50/login</code> to bypass domain-based reputation filters.</li>
+                        </ul>
+                        ${getFollowUpHtml()}
+                    `,
+                    spoken: "Homograph attacks use lookalike Unicode characters or the at-symbol to mislead users into visiting malicious domains.",
+                    askFollowUp: true
+                };
             }
 
-            // 8. MANDATORY FALLBACK: For ANY question other than hi/hello, URL, or authorized protocols:
-            // "if someone is asking question other than hi hello then it should show select one pre promts"
-            return `
-                <div class="akera-agent-tag"><span>AKERA // DIRECTIVE</span></div>
-                <p><strong>Query unrecognized under active security parameters.</strong></p>
-                <p>I am trained strictly to assist with cybersecurity inquiries and URL inspections. <strong>Please select one of the verified pre-prompts below</strong>, or paste any URL directly into the chat:</p>
-                ${getPrePromptsHtml()}
-            `;
+            // 16. GENERAL PROMPT / SECURITY COPILOT RESPONSE
+            return {
+                text: `
+                    <div class="akera-agent-tag"><span>AKERA // SECURITY COPILOT</span></div>
+                    <p>I am online and standing by to assist you with <em>"${escapeHtml(text)}"</em>.</p>
+                    <p>You can paste any URL to run an instant heuristic scan, or explore the quick command protocols below:</p>
+                    ${getPrePromptsHtml()}
+                    ${getFollowUpHtml()}
+                `,
+                spoken: `I am online and standing by. You can paste a link to verify its safety, or select any security protocol on screen.`,
+                askFollowUp: true
+            };
         }
     }
 
